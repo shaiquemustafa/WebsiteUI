@@ -4,58 +4,40 @@ import { searchStocks, getWatchlist, saveWatchlist } from '../services/api';
 const MIN_STOCKS = 3;
 const MAX_STOCKS = 15;
 
-export default function StockSelectionPage({ onComplete, onClose, isEditing = false }) {
+export default function StockSelectionPage({ onBack }) {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState([]);
   const [receiveAll, setReceiveAll] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [loadingExisting, setLoadingExisting] = useState(isEditing);
+  const [loading, setLoading] = useState(true);
 
   const searchTimeout = useRef(null);
   const inputRef = useRef(null);
-  const backdropRef = useRef(null);
 
-  // Load existing watchlist if editing
+  // Load existing watchlist on mount
   useEffect(() => {
-    if (!isEditing) return;
     (async () => {
       try {
         const data = await getWatchlist();
-        if (data.stocks?.length) {
-          setSelected(data.stocks);
-        }
+        if (data.stocks?.length) setSelected(data.stocks);
         setReceiveAll(data.receive_all_updates || false);
       } catch {
-        // Ignore — fresh start
+        // Fresh start
       } finally {
-        setLoadingExisting(false);
+        setLoading(false);
       }
     })();
-  }, [isEditing]);
-
-  // Close on Escape key
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape' && isEditing && onClose) onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isEditing, onClose]);
-
-  // Close on backdrop click (only when editing — onboarding must complete)
-  const handleBackdropClick = (e) => {
-    if (e.target === backdropRef.current && isEditing && onClose) {
-      onClose();
-    }
-  };
+  }, []);
 
   // Debounced search
   const handleSearch = useCallback((value) => {
     setQuery(value);
     setError('');
+    setSaved(false);
 
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
 
@@ -90,12 +72,14 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
     setQuery('');
     setSearchResults([]);
     setError('');
+    setSaved(false);
     inputRef.current?.focus();
   };
 
   const removeStock = (code) => {
     setSelected((prev) => prev.filter((s) => s.bse_scrip_code !== code));
     setError('');
+    setSaved(false);
   };
 
   const handleSave = async () => {
@@ -106,13 +90,14 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
 
     setSaving(true);
     setError('');
+    setSaved(false);
 
     try {
       await saveWatchlist(
         selected.map((s) => s.bse_scrip_code),
         receiveAll
       );
-      onComplete();
+      setSaved(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -127,39 +112,38 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
     return `₹${val.toFixed(0)} Cr`;
   };
 
-  // ── Modal content ──────────────────────────────────────────────────
-  const content = loadingExisting ? (
-    <div className="flex items-center justify-center py-20">
-      <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  ) : (
-    <div className="w-full max-w-lg mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h2 className="text-lg font-bold text-gray-100">
-            {isEditing ? 'Edit Your Watchlist' : 'Select Your Stocks'}
-          </h2>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Choose {MIN_STOCKS}–{MAX_STOCKS} companies for personalized alerts
-          </p>
-        </div>
-        {isEditing && onClose && (
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto py-6 px-4">
+      {/* Back + Header */}
+      <div className="mb-6">
+        {onBack && (
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-white/5 transition"
-            title="Close"
+            onClick={onBack}
+            className="text-xs text-gray-500 hover:text-gray-300 mb-3 flex items-center gap-1 transition"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
+            Back
           </button>
         )}
+        <h2 className="text-xl font-bold text-gray-100">My Watchlist</h2>
+        <p className="text-xs text-gray-500 mt-1">
+          Select {MIN_STOCKS}–{MAX_STOCKS} companies to get personalized WhatsApp alerts
+        </p>
       </div>
 
-      {/* Search Input */}
-      <div className="relative mb-4">
-        <div className="flex items-center bg-[#27272a] rounded-lg border border-white/[0.06] focus-within:border-blue-500 transition">
+      {/* Search */}
+      <div className="relative mb-5">
+        <div className="flex items-center bg-[#18181b] rounded-lg border border-white/[0.06] focus-within:border-blue-500 transition">
           <svg className="w-4 h-4 text-gray-500 ml-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -170,7 +154,6 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             className="flex-1 h-11 px-3 bg-transparent text-sm text-gray-100 placeholder-gray-600 outline-none"
-            autoFocus
           />
           {searching && (
             <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mr-3" />
@@ -179,7 +162,7 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
 
         {/* Search Results Dropdown */}
         {searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e1e22] border border-white/[0.08] rounded-xl shadow-2xl z-30 max-h-60 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e1e22] border border-white/[0.08] rounded-xl shadow-2xl z-20 max-h-60 overflow-y-auto">
             {searchResults.map((stock) => (
               <button
                 key={stock.bse_scrip_code}
@@ -201,9 +184,8 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
           </div>
         )}
 
-        {/* No results */}
         {query.trim().length > 1 && !searching && searchResults.length === 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e1e22] border border-white/[0.08] rounded-xl shadow-2xl z-30 px-4 py-3">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e1e22] border border-white/[0.08] rounded-xl shadow-2xl z-20 px-4 py-3">
             <p className="text-xs text-gray-500 text-center">No companies found for "{query}"</p>
           </div>
         )}
@@ -216,7 +198,7 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
             {selected.length}
           </span> / {MAX_STOCKS}
         </span>
-        {selected.length < MIN_STOCKS && (
+        {selected.length > 0 && selected.length < MIN_STOCKS && (
           <span className="text-[10px] text-yellow-500">
             Need {MIN_STOCKS - selected.length} more
           </span>
@@ -224,18 +206,18 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
       </div>
 
       {/* Selected Stocks */}
-      <div className="min-h-[100px] max-h-[240px] overflow-y-auto mb-4 space-y-1.5">
+      <div className="space-y-1.5 mb-5">
         {selected.length === 0 ? (
-          <div className="flex items-center justify-center h-[100px]">
+          <div className="bg-[#18181b] rounded-xl border border-white/[0.04] flex items-center justify-center py-10">
             <p className="text-xs text-gray-600 text-center">
-              Start typing to search and add stocks to your watchlist
+              Search and add stocks above to build your watchlist
             </p>
           </div>
         ) : (
           selected.map((stock) => (
             <div
               key={stock.bse_scrip_code}
-              className="flex items-center justify-between bg-[#27272a]/50 rounded-lg px-3 py-2.5"
+              className="flex items-center justify-between bg-[#18181b] border border-white/[0.04] rounded-lg px-4 py-3"
             >
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-gray-200 font-medium truncate">{stock.company_name}</p>
@@ -245,7 +227,7 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
               </div>
               <button
                 onClick={() => removeStock(stock.bse_scrip_code)}
-                className="p-1 rounded-md text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition flex-shrink-0 ml-2"
+                className="p-1.5 rounded-md text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition flex-shrink-0 ml-2"
                 title="Remove"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -258,12 +240,12 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
       </div>
 
       {/* Divider */}
-      <div className="border-t border-white/[0.06] my-4" />
+      <div className="border-t border-white/[0.06] my-5" />
 
       {/* Receive all updates toggle */}
-      <div className="flex items-start gap-3 mb-5">
+      <div className="flex items-start gap-3 mb-6">
         <button
-          onClick={() => setReceiveAll(!receiveAll)}
+          onClick={() => { setReceiveAll(!receiveAll); setSaved(false); }}
           className={`mt-0.5 w-10 h-5 rounded-full transition-colors flex-shrink-0 relative ${
             receiveAll ? 'bg-blue-600' : 'bg-[#3a3a3d]'
           }`}
@@ -277,15 +259,14 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
         <div>
           <p className="text-sm text-gray-200 font-medium">Get updates from all companies</p>
           <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
-            Receive market alerts for all companies, not just your selected stocks
+            Receive WhatsApp alerts for all companies, not just your selected stocks
           </p>
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <p className="text-red-400 text-xs mb-3 text-center">{error}</p>
-      )}
+      {/* Error / Success */}
+      {error && <p className="text-red-400 text-xs mb-3 text-center">{error}</p>}
+      {saved && <p className="text-green-400 text-xs mb-3 text-center">✓ Watchlist saved successfully!</p>}
 
       {/* Save Button */}
       <button
@@ -299,27 +280,9 @@ export default function StockSelectionPage({ onComplete, onClose, isEditing = fa
             Saving...
           </>
         ) : (
-          <>
-            {isEditing ? 'Update Watchlist' : 'Save & Continue'}
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </>
+          'Save Watchlist'
         )}
       </button>
-    </div>
-  );
-
-  // ── Render as modal overlay ────────────────────────────────────────
-  return (
-    <div
-      ref={backdropRef}
-      onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 py-6 overflow-y-auto"
-    >
-      <div className="bg-[#18181b] rounded-2xl border border-white/[0.06] p-6 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in">
-        {content}
-      </div>
     </div>
   );
 }

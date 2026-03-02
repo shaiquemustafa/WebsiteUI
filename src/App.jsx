@@ -5,7 +5,7 @@ import MobileList from './components/MobileList';
 import LoginPage from './components/LoginPage';
 import StockSelectionPage from './components/StockSelectionPage';
 import { fetchUIData } from './services/api';
-import { isLoggedIn, fetchCurrentUser, getStoredUser, setStoredUser, logout } from './services/auth';
+import { isLoggedIn, fetchCurrentUser, getStoredUser, logout } from './services/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
 
@@ -13,7 +13,9 @@ function App() {
   // Auth state
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState(null);
-  const [showStockSelection, setShowStockSelection] = useState(false);
+
+  // View state: 'news' (default) or 'watchlist'
+  const [view, setView] = useState('news');
 
   // Data state
   const [data, setData] = useState([]);
@@ -31,20 +33,14 @@ function App() {
         return;
       }
 
-      // We have a token — verify it's still valid
       const stored = getStoredUser();
-      if (stored) setUser(stored); // show stored user immediately
+      if (stored) setUser(stored);
 
       try {
         const freshUser = await fetchCurrentUser();
         if (freshUser) {
           setUser(freshUser);
-          // If user hasn't completed onboarding, show stock selection
-          if (!freshUser.onboarding_complete) {
-            setShowStockSelection(true);
-          }
         } else {
-          // Token was invalid/expired
           setUser(null);
         }
       } catch {
@@ -59,24 +55,6 @@ function App() {
   // ── Handle login success from LoginPage ───────────────────────────
   const handleLoginSuccess = (result) => {
     setUser(result.user);
-    // Show stock selection if user hasn't completed onboarding
-    if (!result.user.onboarding_complete) {
-      setShowStockSelection(true);
-    }
-  };
-
-  // ── Handle stock selection complete ────────────────────────────────
-  const handleStockSelectionComplete = () => {
-    setShowStockSelection(false);
-    // Update stored user to reflect onboarding is done
-    const u = { ...user, onboarding_complete: true };
-    setUser(u);
-    setStoredUser(u);
-  };
-
-  // ── Open stock selection for editing (from sidebar) ────────────────
-  const handleEditWatchlist = () => {
-    setShowStockSelection(true);
   };
 
   // ── Fetch market data (only when logged in) ───────────────────────
@@ -96,7 +74,6 @@ function App() {
       }
     };
     load();
-    // Refresh every 2 minutes
     const interval = setInterval(load, 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, [user]);
@@ -114,6 +91,7 @@ function App() {
 
   const handleSelect = (index) => {
     setSelectedIndex(index);
+    setView('news');
     if (isMobile) setShowDetail(true);
   };
 
@@ -173,21 +151,41 @@ function App() {
     );
   }
 
+  // ── Decide what the main content area shows ────────────────────────
+  const mainContent = view === 'watchlist' ? (
+    <StockSelectionPage onBack={() => setView('news')} />
+  ) : (
+    <DetailPanel item={data[selectedIndex]} />
+  );
+
   // ── Main app (logged-in view) ─────────────────────────────────────
   return (
     <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">
-      {/* Desktop: sidebar + detail */}
+      {/* Desktop: sidebar + main content */}
       {!isMobile && (
         <>
-          <Sidebar data={data} activeIndex={selectedIndex} onSelect={handleSelect} user={user} onLogout={logout} onEditWatchlist={handleEditWatchlist} />
+          <Sidebar
+            data={data}
+            activeIndex={selectedIndex}
+            onSelect={handleSelect}
+            user={user}
+            onLogout={logout}
+            onEditWatchlist={() => setView(view === 'watchlist' ? 'news' : 'watchlist')}
+            isWatchlistActive={view === 'watchlist'}
+          />
           <main className="flex-1 p-6 overflow-y-auto">
-            <DetailPanel item={data[selectedIndex]} />
+            {mainContent}
           </main>
         </>
       )}
 
-      {/* Mobile: list or detail */}
-      {isMobile && !showDetail && (
+      {/* Mobile: list, detail, or watchlist */}
+      {isMobile && view === 'watchlist' && (
+        <main className="flex-1 overflow-y-auto">
+          <StockSelectionPage onBack={() => setView('news')} />
+        </main>
+      )}
+      {isMobile && view === 'news' && !showDetail && (
         <main className="flex-1 overflow-y-auto">
           {/* Mobile header */}
           <div className="sticky top-0 bg-[#0a0a0a] z-10 px-4 py-3 border-b border-white/5 flex items-center justify-between">
@@ -199,9 +197,9 @@ function App() {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={handleEditWatchlist}
+                onClick={() => setView('watchlist')}
                 className="text-xs text-gray-500 hover:text-blue-400 transition px-2 py-1"
-                title="Edit Watchlist"
+                title="My Watchlist"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
@@ -220,19 +218,10 @@ function App() {
           </div>
         </main>
       )}
-      {isMobile && showDetail && (
+      {isMobile && view === 'news' && showDetail && (
         <main className="flex-1 p-4 overflow-y-auto">
           <DetailPanel item={data[selectedIndex]} onBack={() => setShowDetail(false)} isMobile />
         </main>
-      )}
-
-      {/* Stock selection modal overlay */}
-      {showStockSelection && (
-        <StockSelectionPage
-          onComplete={handleStockSelectionComplete}
-          onClose={() => setShowStockSelection(false)}
-          isEditing={user.onboarding_complete}
-        />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { getImpactBadgeClass } from '../utils/format';
 
-export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, onEditWatchlist }) {
+export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, onEditWatchlist, isWatchlistActive }) {
   return (
     <aside className="w-[380px] border-r border-white/5 overflow-y-auto bg-[#0a0a0a] flex-shrink-0 flex flex-col">
       {/* Header */}
@@ -75,8 +75,8 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
               {onEditWatchlist && (
                 <button
                   onClick={onEditWatchlist}
-                  className="text-[11px] text-gray-600 hover:text-blue-400 transition px-2 py-1 rounded"
-                  title="Edit Watchlist"
+                  className={`text-[11px] transition px-2 py-1 rounded ${isWatchlistActive ? 'text-blue-400' : 'text-gray-600 hover:text-blue-400'}`}
+                  title="My Watchlist"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
