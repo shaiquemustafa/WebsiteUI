@@ -1,6 +1,6 @@
 import { getImpactBadgeClass } from '../utils/format';
 
-export default function Sidebar({ data, activeIndex, onSelect, user, onLogout }) {
+export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, onEditWatchlist }) {
   return (
     <aside className="w-[380px] border-r border-white/5 overflow-y-auto bg-[#0a0a0a] flex-shrink-0 flex flex-col">
       {/* Header */}
@@ -54,29 +54,44 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout })
 
       {/* User footer */}
       {user && (
-        <div className="border-t border-white/5 px-5 py-3 flex items-center justify-between bg-[#0a0a0a]">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-blue-400">
-                {user.name ? user.name.charAt(0).toUpperCase() : '👤'}
-              </span>
+        <div className="border-t border-white/5 px-5 py-3 bg-[#0a0a0a]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-blue-400">
+                  {user.name ? user.name.charAt(0).toUpperCase() : '👤'}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-300 truncate">
+                  {user.name || 'User'}
+                </p>
+                <p className="text-[10px] text-gray-600 truncate">
+                  +91 {user.phone?.slice(-10)}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-gray-300 truncate">
-                {user.name || 'User'}
-              </p>
-              <p className="text-[10px] text-gray-600 truncate">
-                +91 {user.phone?.slice(-10)}
-              </p>
+            <div className="flex items-center gap-1">
+              {onEditWatchlist && (
+                <button
+                  onClick={onEditWatchlist}
+                  className="text-[11px] text-gray-600 hover:text-blue-400 transition px-2 py-1 rounded"
+                  title="Edit Watchlist"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                  </svg>
+                </button>
+              )}
+              <button
+                onClick={onLogout}
+                className="text-[11px] text-gray-600 hover:text-red-400 transition px-2 py-1 rounded"
+                title="Logout"
+              >
+                Logout
+              </button>
             </div>
           </div>
-          <button
-            onClick={onLogout}
-            className="text-[11px] text-gray-600 hover:text-red-400 transition px-2 py-1 rounded"
-            title="Logout"
-          >
-            Logout
-          </button>
         </div>
       )}
     </aside>

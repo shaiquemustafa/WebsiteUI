@@ -111,7 +111,7 @@ export default function LoginPage({ onLoginSuccess }) {
   const handleVerifyOTP = async (otpStr) => {
     const code = otpStr || otp.join('');
     if (code.length !== OTP_LENGTH) {
-      setError('Please enter the complete 6-digit OTP.');
+      setError('Please enter the complete 4-digit OTP.');
       return;
     }
 

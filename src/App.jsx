@@ -3,8 +3,9 @@ import Sidebar from './components/Sidebar';
 import DetailPanel from './components/DetailPanel';
 import MobileList from './components/MobileList';
 import LoginPage from './components/LoginPage';
+import StockSelectionPage from './components/StockSelectionPage';
 import { fetchUIData } from './services/api';
-import { isLoggedIn, fetchCurrentUser, getStoredUser, logout } from './services/auth';
+import { isLoggedIn, fetchCurrentUser, getStoredUser, setStoredUser, logout } from './services/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
 
@@ -12,6 +13,7 @@ function App() {
   // Auth state
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState(null);
+  const [showStockSelection, setShowStockSelection] = useState(false);
 
   // Data state
   const [data, setData] = useState([]);
@@ -37,6 +39,10 @@ function App() {
         const freshUser = await fetchCurrentUser();
         if (freshUser) {
           setUser(freshUser);
+          // If user hasn't completed onboarding, show stock selection
+          if (!freshUser.onboarding_complete) {
+            setShowStockSelection(true);
+          }
         } else {
           // Token was invalid/expired
           setUser(null);
@@ -53,6 +59,24 @@ function App() {
   // ── Handle login success from LoginPage ───────────────────────────
   const handleLoginSuccess = (result) => {
     setUser(result.user);
+    // Show stock selection if user hasn't completed onboarding
+    if (!result.user.onboarding_complete) {
+      setShowStockSelection(true);
+    }
+  };
+
+  // ── Handle stock selection complete ────────────────────────────────
+  const handleStockSelectionComplete = () => {
+    setShowStockSelection(false);
+    // Update stored user to reflect onboarding is done
+    const u = { ...user, onboarding_complete: true };
+    setUser(u);
+    setStoredUser(u);
+  };
+
+  // ── Open stock selection for editing (from sidebar) ────────────────
+  const handleEditWatchlist = () => {
+    setShowStockSelection(true);
   };
 
   // ── Fetch market data (only when logged in) ───────────────────────
@@ -110,6 +134,16 @@ function App() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
+  // ── Onboarding: stock selection ────────────────────────────────────
+  if (showStockSelection) {
+    return (
+      <StockSelectionPage
+        onComplete={handleStockSelectionComplete}
+        isEditing={user.onboarding_complete}
+      />
+    );
+  }
+
   // ── Loading market data ───────────────────────────────────────────
   if (loading) {
     return (
@@ -155,7 +189,7 @@ function App() {
       {/* Desktop: sidebar + detail */}
       {!isMobile && (
         <>
-          <Sidebar data={data} activeIndex={selectedIndex} onSelect={handleSelect} user={user} onLogout={logout} />
+          <Sidebar data={data} activeIndex={selectedIndex} onSelect={handleSelect} user={user} onLogout={logout} onEditWatchlist={handleEditWatchlist} />
           <main className="flex-1 p-6 overflow-y-auto">
             <DetailPanel item={data[selectedIndex]} />
           </main>
@@ -173,12 +207,23 @@ function App() {
                 {user.name ? `Hi, ${user.name}` : `+91 ${user.phone?.slice(-10)}`}
               </p>
             </div>
-            <button
-              onClick={logout}
-              className="text-xs text-gray-500 hover:text-red-400 transition px-2 py-1"
-            >
-              Logout
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleEditWatchlist}
+                className="text-xs text-gray-500 hover:text-blue-400 transition px-2 py-1"
+                title="Edit Watchlist"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                </svg>
+              </button>
+              <button
+                onClick={logout}
+                className="text-xs text-gray-500 hover:text-red-400 transition px-2 py-1"
+              >
+                Logout
+              </button>
+            </div>
           </div>
           <div className="p-4">
             <MobileList data={data} onSelect={handleSelect} />
