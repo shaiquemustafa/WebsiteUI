@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { sendOTP, verifyOTP } from '../services/auth';
 
 const PHONE_REGEX = /^[6-9]\d{9}$/; // Indian 10-digit mobile
-const OTP_LENGTH = 6;
+const OTP_LENGTH = 4;
 
 export default function LoginPage({ onLoginSuccess }) {
   const [step, setStep] = useState('phone'); // 'phone' | 'otp'
