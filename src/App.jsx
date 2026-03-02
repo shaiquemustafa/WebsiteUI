@@ -134,16 +134,6 @@ function App() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // ── Onboarding: stock selection ────────────────────────────────────
-  if (showStockSelection) {
-    return (
-      <StockSelectionPage
-        onComplete={handleStockSelectionComplete}
-        isEditing={user.onboarding_complete}
-      />
-    );
-  }
-
   // ── Loading market data ───────────────────────────────────────────
   if (loading) {
     return (
@@ -234,6 +224,15 @@ function App() {
         <main className="flex-1 p-4 overflow-y-auto">
           <DetailPanel item={data[selectedIndex]} onBack={() => setShowDetail(false)} isMobile />
         </main>
+      )}
+
+      {/* Stock selection modal overlay */}
+      {showStockSelection && (
+        <StockSelectionPage
+          onComplete={handleStockSelectionComplete}
+          onClose={() => setShowStockSelection(false)}
+          isEditing={user.onboarding_complete}
+        />
       )}
     </div>
   );
