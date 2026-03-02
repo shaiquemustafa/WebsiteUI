@@ -153,7 +153,7 @@ function App() {
 
   // ── Decide what the main content area shows ────────────────────────
   const mainContent = view === 'watchlist' ? (
-    <StockSelectionPage onBack={() => setView('news')} />
+    <StockSelectionPage />
   ) : (
     <DetailPanel item={data[selectedIndex]} />
   );
@@ -179,32 +179,13 @@ function App() {
         </>
       )}
 
-      {/* Mobile: list, detail, or watchlist */}
-      {isMobile && view === 'watchlist' && (
+      {/* Mobile: tabs or detail */}
+      {isMobile && !showDetail && (
         <main className="flex-1 overflow-y-auto">
-          <StockSelectionPage onBack={() => setView('news')} />
-        </main>
-      )}
-      {isMobile && view === 'news' && !showDetail && (
-        <main className="flex-1 overflow-y-auto">
-          {/* Mobile header */}
-          <div className="sticky top-0 bg-[#0a0a0a] z-10 px-4 py-3 border-b border-white/5 flex items-center justify-between">
-            <div>
+          {/* Mobile header with tabs */}
+          <div className="sticky top-0 bg-[#0a0a0a] z-10 px-4 border-b border-white/5">
+            <div className="flex items-center justify-between pt-3 pb-2">
               <h1 className="text-lg font-bold text-gray-100">StockHub</h1>
-              <p className="text-[10px] text-gray-500">
-                {user.name ? `Hi, ${user.name}` : `+91 ${user.phone?.slice(-10)}`}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setView('watchlist')}
-                className="text-xs text-gray-500 hover:text-blue-400 transition px-2 py-1"
-                title="My Watchlist"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                </svg>
-              </button>
               <button
                 onClick={logout}
                 className="text-xs text-gray-500 hover:text-red-400 transition px-2 py-1"
@@ -212,9 +193,35 @@ function App() {
                 Logout
               </button>
             </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setView('news')}
+                className={`pb-2.5 text-xs font-semibold transition border-b-2 ${
+                  view === 'news'
+                    ? 'text-gray-200 border-blue-500'
+                    : 'text-gray-500 border-transparent hover:text-gray-300'
+                }`}
+              >
+                Live Updates
+              </button>
+              <button
+                onClick={() => setView('watchlist')}
+                className={`pb-2.5 text-xs font-semibold transition border-b-2 ${
+                  view === 'watchlist'
+                    ? 'text-gray-200 border-blue-500'
+                    : 'text-gray-500 border-transparent hover:text-gray-300'
+                }`}
+              >
+                My Watchlist
+              </button>
+            </div>
           </div>
           <div className="p-4">
-            <MobileList data={data} onSelect={handleSelect} />
+            {view === 'news' ? (
+              <MobileList data={data} onSelect={handleSelect} />
+            ) : (
+              <StockSelectionPage />
+            )}
           </div>
         </main>
       )}

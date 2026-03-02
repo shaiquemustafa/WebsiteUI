@@ -4,19 +4,38 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
   return (
     <aside className="w-[380px] border-r border-white/5 overflow-y-auto bg-[#0a0a0a] flex-shrink-0 flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 bg-[#0a0a0a] z-10 px-5 py-4 border-b border-white/5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-100">StockHub</h1>
-            <p className="text-xs text-gray-500 mt-1">Live Market Predictions</p>
-          </div>
+      <div className="sticky top-0 bg-[#0a0a0a] z-10 px-5 pt-4 border-b border-white/5">
+        <h1 className="text-xl font-bold text-gray-100">StockHub</h1>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-4 mt-3">
+          <button
+            onClick={() => { if (isWatchlistActive && onEditWatchlist) onEditWatchlist(); }}
+            className={`pb-2.5 text-xs font-semibold transition border-b-2 ${
+              !isWatchlistActive
+                ? 'text-gray-200 border-blue-500'
+                : 'text-gray-500 border-transparent hover:text-gray-300'
+            }`}
+          >
+            Live Updates
+          </button>
+          <button
+            onClick={() => { if (!isWatchlistActive && onEditWatchlist) onEditWatchlist(); }}
+            className={`pb-2.5 text-xs font-semibold transition border-b-2 ${
+              isWatchlistActive
+                ? 'text-gray-200 border-blue-500'
+                : 'text-gray-500 border-transparent hover:text-gray-300'
+            }`}
+          >
+            My Watchlist
+          </button>
         </div>
       </div>
 
       {/* Stock list */}
       <div className="p-3 space-y-2 flex-1 overflow-y-auto">
         {data.map((item, index) => {
-          const isActive = index === activeIndex;
+          const isActive = index === activeIndex && !isWatchlistActive;
           const impact = item.impact || 'UNKNOWN';
           const time = new Date(item.news_time).toLocaleString('en-IN', {
             day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
@@ -71,26 +90,13 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              {onEditWatchlist && (
-                <button
-                  onClick={onEditWatchlist}
-                  className={`text-[11px] transition px-2 py-1 rounded ${isWatchlistActive ? 'text-blue-400' : 'text-gray-600 hover:text-blue-400'}`}
-                  title="My Watchlist"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                  </svg>
-                </button>
-              )}
-              <button
-                onClick={onLogout}
-                className="text-[11px] text-gray-600 hover:text-red-400 transition px-2 py-1 rounded"
-                title="Logout"
-              >
-                Logout
-              </button>
-            </div>
+            <button
+              onClick={onLogout}
+              className="text-[11px] text-gray-600 hover:text-red-400 transition px-2 py-1 rounded"
+              title="Logout"
+            >
+              Logout
+            </button>
           </div>
         </div>
       )}
