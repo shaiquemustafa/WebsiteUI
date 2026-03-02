@@ -1,14 +1,20 @@
 import { getImpactBadgeClass } from '../utils/format';
 
-export default function Sidebar({ data, activeIndex, onSelect }) {
+export default function Sidebar({ data, activeIndex, onSelect, user, onLogout }) {
   return (
-    <aside className="w-[380px] border-r border-white/5 overflow-y-auto bg-[#0a0a0a] flex-shrink-0">
+    <aside className="w-[380px] border-r border-white/5 overflow-y-auto bg-[#0a0a0a] flex-shrink-0 flex flex-col">
+      {/* Header */}
       <div className="sticky top-0 bg-[#0a0a0a] z-10 px-5 py-4 border-b border-white/5">
-        <h1 className="text-xl font-bold text-gray-100">StockHub</h1>
-        <p className="text-xs text-gray-500 mt-1">Live Market Predictions</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-100">StockHub</h1>
+            <p className="text-xs text-gray-500 mt-1">Live Market Predictions</p>
+          </div>
+        </div>
       </div>
 
-      <div className="p-3 space-y-2">
+      {/* Stock list */}
+      <div className="p-3 space-y-2 flex-1 overflow-y-auto">
         {data.map((item, index) => {
           const isActive = index === activeIndex;
           const impact = item.impact || 'UNKNOWN';
@@ -45,6 +51,34 @@ export default function Sidebar({ data, activeIndex, onSelect }) {
           );
         })}
       </div>
+
+      {/* User footer */}
+      {user && (
+        <div className="border-t border-white/5 px-5 py-3 flex items-center justify-between bg-[#0a0a0a]">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-bold text-blue-400">
+                {user.name ? user.name.charAt(0).toUpperCase() : '👤'}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-300 truncate">
+                {user.name || 'User'}
+              </p>
+              <p className="text-[10px] text-gray-600 truncate">
+                +91 {user.phone?.slice(-10)}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onLogout}
+            className="text-[11px] text-gray-600 hover:text-red-400 transition px-2 py-1 rounded"
+            title="Logout"
+          >
+            Logout
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
