@@ -9,11 +9,12 @@ export default function StockSelectionPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState([]);
-  const [receiveAll, setReceiveAll] = useState(false);
+  const [receiveAll, setReceiveAll] = useState(true); // default ON for new users
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [hasExisting, setHasExisting] = useState(false);
 
   const searchTimeout = useRef(null);
   const inputRef = useRef(null);
@@ -23,10 +24,16 @@ export default function StockSelectionPage() {
     (async () => {
       try {
         const data = await getWatchlist();
-        if (data.stocks?.length) setSelected(data.stocks);
-        setReceiveAll(data.receive_all_updates || false);
+        if (data.stocks?.length) {
+          setSelected(data.stocks);
+          setHasExisting(true);
+        }
+        // Only override default if user already has a saved preference
+        if (data.stocks?.length || data.onboarding_complete) {
+          setReceiveAll(data.receive_all_updates ?? true);
+        }
       } catch {
-        // Fresh start
+        // Fresh start — receiveAll stays true
       } finally {
         setLoading(false);
       }
@@ -84,7 +91,7 @@ export default function StockSelectionPage() {
 
   const handleSave = async () => {
     if (selected.length < MIN_STOCKS) {
-      setError(`Please select at least ${MIN_STOCKS} stocks.`);
+      setError(`Please select at least ${MIN_STOCKS} stocks to save your watchlist.`);
       return;
     }
 
@@ -98,6 +105,7 @@ export default function StockSelectionPage() {
         receiveAll
       );
       setSaved(true);
+      setHasExisting(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -126,7 +134,17 @@ export default function StockSelectionPage() {
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-100">My Watchlist</h2>
         <p className="text-xs text-gray-500 mt-1">
-          Select {MIN_STOCKS}–{MAX_STOCKS} companies to get personalized WhatsApp alerts
+          Choose companies to get personalized WhatsApp alerts when news breaks
+        </p>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg px-4 py-3 mb-5 flex items-start gap-2.5">
+        <svg className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p className="text-xs text-blue-300 leading-relaxed">
+          Add at least <span className="font-semibold">{MIN_STOCKS} stocks</span> to save your watchlist. You can select up to {MAX_STOCKS}.
         </p>
       </div>
 
@@ -189,7 +207,7 @@ export default function StockSelectionPage() {
         </span>
         {selected.length > 0 && selected.length < MIN_STOCKS && (
           <span className="text-[10px] text-yellow-500">
-            Need {MIN_STOCKS - selected.length} more
+            Need {MIN_STOCKS - selected.length} more to save
           </span>
         )}
       </div>
@@ -231,27 +249,21 @@ export default function StockSelectionPage() {
       {/* Divider */}
       <div className="border-t border-white/[0.06] my-5" />
 
-      {/* Receive all updates toggle */}
-      <div className="flex items-start gap-3 mb-6">
-        <button
-          onClick={() => { setReceiveAll(!receiveAll); setSaved(false); }}
-          className={`mt-0.5 w-10 h-5 rounded-full transition-colors flex-shrink-0 relative ${
-            receiveAll ? 'bg-blue-600' : 'bg-[#3a3a3d]'
-          }`}
-        >
-          <span
-            className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-              receiveAll ? 'translate-x-5' : 'translate-x-0.5'
-            }`}
-          />
-        </button>
+      {/* Receive all updates — proper checkbox toggle */}
+      <label className="flex items-start gap-3 mb-6 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={receiveAll}
+          onChange={(e) => { setReceiveAll(e.target.checked); setSaved(false); }}
+          className="mt-1 w-4 h-4 rounded border-gray-600 bg-[#27272a] text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer accent-blue-600"
+        />
         <div>
           <p className="text-sm text-gray-200 font-medium">Get updates from all companies</p>
           <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
             Receive WhatsApp alerts for all companies, not just your selected stocks
           </p>
         </div>
-      </div>
+      </label>
 
       {/* Error / Success */}
       {error && <p className="text-red-400 text-xs mb-3 text-center">{error}</p>}
