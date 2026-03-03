@@ -4,6 +4,9 @@ import DetailPanel from './components/DetailPanel';
 import MobileList from './components/MobileList';
 import LoginPage from './components/LoginPage';
 import StockSelectionPage from './components/StockSelectionPage';
+import PrivacyPolicyPage from './components/PrivacyPolicyPage';
+import TermsPage from './components/TermsPage';
+import Footer from './components/Footer';
 import { fetchUIData } from './services/api';
 import { isLoggedIn, fetchCurrentUser, getStoredUser, logout } from './services/auth';
 
@@ -14,7 +17,7 @@ function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState(null);
 
-  // View state: 'news' (default) or 'watchlist'
+  // View state: 'news' | 'watchlist' | 'privacy' | 'terms'
   const [view, setView] = useState('news');
 
   // Data state
@@ -55,6 +58,11 @@ function App() {
   // ── Handle login success from LoginPage ───────────────────────────
   const handleLoginSuccess = (result) => {
     setUser(result.user);
+  };
+
+  // ── Navigation helper ─────────────────────────────────────────────
+  const handleNavigate = (page) => {
+    setView(page); // 'privacy', 'terms', 'news', 'watchlist'
   };
 
   // ── Fetch market data (only when logged in) ───────────────────────
@@ -107,9 +115,40 @@ function App() {
     );
   }
 
-  // ── Not logged in → show login ────────────────────────────────────
+  // ── Not logged in ─────────────────────────────────────────────────
   if (!user) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    // Show Privacy Policy or Terms as standalone pages (no login required)
+    if (view === 'privacy') {
+      return (
+        <div className="min-h-screen bg-[#0a0a0a]">
+          <PrivacyPolicyPage onBack={() => setView('news')} />
+        </div>
+      );
+    }
+    if (view === 'terms') {
+      return (
+        <div className="min-h-screen bg-[#0a0a0a]">
+          <TermsPage onBack={() => setView('news')} />
+        </div>
+      );
+    }
+    return <LoginPage onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
+  }
+
+  // ── Logged in: Privacy / Terms pages ──────────────────────────────
+  if (view === 'privacy') {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a]">
+        <PrivacyPolicyPage onBack={() => setView('news')} />
+      </div>
+    );
+  }
+  if (view === 'terms') {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a]">
+        <TermsPage onBack={() => setView('news')} />
+      </div>
+    );
   }
 
   // ── Loading market data ───────────────────────────────────────────
@@ -153,9 +192,19 @@ function App() {
 
   // ── Decide what the main content area shows ────────────────────────
   const mainContent = view === 'watchlist' ? (
-    <StockSelectionPage />
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1">
+        <StockSelectionPage />
+      </div>
+      <Footer onNavigate={handleNavigate} />
+    </div>
   ) : (
-    <DetailPanel item={data[selectedIndex]} />
+    <div className="flex flex-col min-h-full">
+      <div className="flex-1">
+        <DetailPanel item={data[selectedIndex]} />
+      </div>
+      <Footer onNavigate={handleNavigate} />
+    </div>
   );
 
   // ── Main app (logged-in view) ─────────────────────────────────────
@@ -218,9 +267,15 @@ function App() {
           </div>
           <div className="p-4">
             {view === 'news' ? (
-              <MobileList data={data} onSelect={handleSelect} />
+              <>
+                <MobileList data={data} onSelect={handleSelect} />
+                <Footer onNavigate={handleNavigate} />
+              </>
             ) : (
-              <StockSelectionPage />
+              <>
+                <StockSelectionPage />
+                <Footer onNavigate={handleNavigate} />
+              </>
             )}
           </div>
         </main>
