@@ -24,16 +24,16 @@ export default function MobileList({ data, onSelect }) {
                   {impact}
                 </span>
               </div>
+              {item.category && (
+                <span className={`category-tag ${getCategoryClass(item.category)} mt-1.5 inline-flex`}>
+                  {item.category}
+                </span>
+              )}
               <p className="text-[13px] text-gray-400 mt-2 news-summary leading-relaxed">
                 {item.summary || 'No summary.'}
               </p>
-              <div className="flex items-center justify-between mt-3">
+              <div className="mt-3">
                 <span className="text-xs text-gray-500">{time}</span>
-                {item.category && (
-                  <span className={`category-tag ${getCategoryClass(item.category)}`}>
-                    {item.category}
-                  </span>
-                )}
               </div>
             </div>
           );
