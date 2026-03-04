@@ -54,14 +54,11 @@ export async function sendOTP(phone) {
   return data;
 }
 
-export async function verifyOTP(phone, otp, name = '') {
-  const payload = { phone, otp };
-  if (name) payload.name = name;
-
+export async function verifyOTP(phone, otp) {
   const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ phone, otp }),
   });
 
   const data = await res.json();

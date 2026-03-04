@@ -1,20 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
-import { sendOTP, verifyOTP } from '../services/auth';
+import { sendOTP, verifyOTP, updateUserName } from '../services/auth';
 import Footer from './Footer';
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 const OTP_LENGTH = 4;
 
 export default function LoginPage({ onLoginSuccess, onNavigate }) {
-  const [step, setStep] = useState('phone');
+  const [step, setStep] = useState('phone');   // 'phone' | 'otp' | 'name'
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(0);
+  const [verifyResult, setVerifyResult] = useState(null); // holds the result from verify-otp
 
   const otpRefs = useRef([]);
+  const nameRef = useRef(null);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -26,15 +28,15 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     if (step === 'otp' && otpRefs.current[0]) {
       otpRefs.current[0].focus();
     }
+    if (step === 'name' && nameRef.current) {
+      nameRef.current.focus();
+    }
   }, [step]);
 
+  // ── Step 1: Send OTP ──
   const handleSendOTP = async (e) => {
     e?.preventDefault();
     setError('');
-    if (!name.trim()) {
-      setError('Please enter your name.');
-      return;
-    }
     const cleaned = phone.replace(/\s|-/g, '');
     if (!PHONE_REGEX.test(cleaned)) {
       setError('Please enter a valid 10-digit mobile number.');
@@ -59,6 +61,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     await handleSendOTP();
   };
 
+  // ── Step 2: OTP input helpers ──
   const handleOtpChange = (index, value) => {
     if (value && !/^\d$/.test(value)) return;
     const newOtp = [...otp];
@@ -95,6 +98,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     }
   };
 
+  // ── Step 2: Verify OTP ──
   const handleVerifyOTP = async (otpStr) => {
     const code = otpStr || otp.join('');
     if (code.length !== OTP_LENGTH) {
@@ -104,12 +108,43 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     setLoading(true);
     setError('');
     try {
-      const result = await verifyOTP(phone.replace(/\s|-/g, ''), code, name.trim());
-      onLoginSuccess(result);
+      const result = await verifyOTP(phone.replace(/\s|-/g, ''), code);
+      if (result.is_new_user) {
+        // New user → ask for name before proceeding
+        setVerifyResult(result);
+        setStep('name');
+      } else {
+        // Existing user → go straight to dashboard
+        onLoginSuccess(result);
+      }
     } catch (err) {
       setError(err.message);
       setOtp(Array(OTP_LENGTH).fill(''));
       otpRefs.current[0]?.focus();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Step 3: Save name (new users only) ──
+  const handleSaveName = async (e) => {
+    e?.preventDefault();
+    if (!name.trim()) {
+      setError('Please enter your name.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await updateUserName(name.trim());
+      // Update the stored result with the name and proceed
+      const updatedResult = {
+        ...verifyResult,
+        user: { ...verifyResult.user, name: name.trim() },
+      };
+      onLoginSuccess(updatedResult);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -132,23 +167,11 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
           {/* Card */}
           <div className="bg-[#0d1117] rounded-2xl border border-white/[0.06] p-7 shadow-2xl shadow-black/40">
 
-            {/* Phone Step */}
+            {/* ── Phone Step ── */}
             {step === 'phone' && (
               <form onSubmit={handleSendOTP}>
                 <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">Login with WhatsApp</h2>
                 <p className="text-xs text-gray-500 mb-6 font-light">We'll send a verification code to your WhatsApp</p>
-
-                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Your Name</label>
-                <input
-                  type="text"
-                  placeholder="Enter your name"
-                  value={name}
-                  onChange={(e) => { setName(e.target.value); setError(''); }}
-                  className="w-full h-11 px-3.5 mb-4 bg-[#161b22] rounded-lg text-sm text-gray-100 placeholder-gray-600 border border-white/[0.06] outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                  autoFocus
-                  disabled={loading}
-                  maxLength={100}
-                />
 
                 <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
                 <div className="flex items-center gap-2 mb-5">
@@ -163,6 +186,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value.replace(/\D/g, '')); setError(''); }}
                     className="flex-1 h-11 px-3.5 bg-[#161b22] rounded-lg text-sm text-gray-100 placeholder-gray-600 border border-white/[0.06] outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                    autoFocus
                     disabled={loading}
                   />
                 </div>
@@ -171,7 +195,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
 
                 <button
                   type="submit"
-                  disabled={loading || phone.length < 10 || !name.trim()}
+                  disabled={loading || phone.length < 10}
                   className="w-full h-11 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/30 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 disabled:shadow-none"
                 >
                   {loading ? (
@@ -191,7 +215,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
               </form>
             )}
 
-            {/* OTP Step */}
+            {/* ── OTP Step ── */}
             {step === 'otp' && (
               <div>
                 <button
@@ -259,6 +283,43 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                   )}
                 </div>
               </div>
+            )}
+
+            {/* ── Name Step (new users only) ── */}
+            {step === 'name' && (
+              <form onSubmit={handleSaveName}>
+                <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">One last thing!</h2>
+                <p className="text-xs text-gray-500 mb-6 font-light">Tell us your name so we can personalize your experience</p>
+
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Your Name</label>
+                <input
+                  ref={nameRef}
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); setError(''); }}
+                  className="w-full h-11 px-3.5 mb-5 bg-[#161b22] rounded-lg text-sm text-gray-100 placeholder-gray-600 border border-white/[0.06] outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                  disabled={loading}
+                  maxLength={100}
+                />
+
+                {error && <p className="text-red-400/90 text-xs mb-3 font-medium">{error}</p>}
+
+                <button
+                  type="submit"
+                  disabled={loading || !name.trim()}
+                  className="w-full h-11 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/30 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 disabled:shadow-none"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Continue to RITO →'
+                  )}
+                </button>
+              </form>
             )}
           </div>
 
