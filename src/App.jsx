@@ -236,24 +236,24 @@ function App() {
       {isMobile && !showDetail && (
         <main className="flex-1 overflow-y-auto">
           <div className="sticky top-0 bg-[#06080a]/95 backdrop-blur-md z-10 px-4 border-b border-white/[0.04]">
-            <div className="flex items-center justify-between pt-3.5 pb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                  <span className="text-xs font-black text-white">R</span>
+            <div className="flex items-center justify-between pt-4 pb-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                  <span className="text-sm font-black text-white">R</span>
                 </div>
-                <h1 className="text-base font-bold text-gray-100 tracking-tight">RITO</h1>
+                <h1 className="text-lg font-bold text-gray-100 tracking-tight">RITO</h1>
               </div>
               <button
                 onClick={logout}
-                className="text-[11px] text-gray-600 hover:text-red-400 transition-colors px-2 py-1"
+                className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-red-400/10"
               >
                 Logout
               </button>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-7">
               <button
                 onClick={() => setView('news')}
-                className={`pb-3 text-[13px] font-medium transition border-b-2 ${
+                className={`pb-3.5 text-sm font-semibold transition border-b-2 ${
                   view === 'news'
                     ? 'text-gray-100 border-blue-500'
                     : 'text-gray-500 border-transparent hover:text-gray-300'
@@ -263,7 +263,7 @@ function App() {
               </button>
               <button
                 onClick={() => setView('watchlist')}
-                className={`pb-3 text-[13px] font-medium transition border-b-2 ${
+                className={`pb-3.5 text-sm font-semibold transition border-b-2 ${
                   view === 'watchlist'
                     ? 'text-gray-100 border-blue-500'
                     : 'text-gray-500 border-transparent hover:text-gray-300'
