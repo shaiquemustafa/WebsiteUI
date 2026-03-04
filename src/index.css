@@ -185,17 +185,23 @@ body {
 
 /* ─── News List Items ───────────────────────────────────────────────── */
 .news-item-card {
-  background-color: transparent;
-  border-radius: 0.875rem;
-  padding: 1rem 1.125rem;
+  background-color: var(--bg-card);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
   cursor: pointer;
-  transition: all 0.15s ease;
-  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-default);
+  position: relative;
 }
 
 .news-item-card:hover {
-  background-color: var(--bg-card);
-  border-color: var(--border-subtle);
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-hover);
+}
+
+.news-item-card:hover .card-chevron {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .news-item-card.active {
@@ -204,13 +210,42 @@ body {
   box-shadow: inset 3px 0 0 0 #3b82f6;
 }
 
+.card-chevron {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.2s ease;
+  color: var(--text-tertiary);
+}
+
 .news-summary {
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Impact as inline colored text (for list cards) */
+.impact-text-positive, .impact-text-beat, .impact-text-strongly-positive {
+  color: #3fb950;
+}
+.impact-text-negative, .impact-text-missed, .impact-text-strongly-negative {
+  color: #f85149;
+}
+.impact-text-neutral, .impact-text-matched {
+  color: #8b949e;
+}
+
+/* Category as inline colored text (for list cards) */
+.cat-text-financial { color: #d2a8ff; }
+.cat-text-leadership { color: #e3b341; }
+.cat-text-capital { color: #56d4dd; }
+.cat-text-dividends { color: #3fb950; }
+.cat-text-mergers { color: #f778ba; }
+.cat-text-orders { color: #58a6ff; }
+.cat-text-operations { color: #f0883e; }
+.cat-text-legal { color: #f85149; }
+.cat-text-general { color: #8b949e; }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }

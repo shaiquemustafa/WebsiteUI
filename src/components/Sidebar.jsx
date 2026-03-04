@@ -1,4 +1,4 @@
-import { getImpactBadgeClass, getCategoryClass } from '../utils/format';
+import { getImpactTextClass, getCategoryTextClass } from '../utils/format';
 
 export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, onEditWatchlist, isWatchlistActive }) {
   return (
@@ -38,7 +38,7 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
       </div>
 
       {/* Stock list */}
-      <div className="px-3 py-3 space-y-1 flex-1 overflow-y-auto">
+      <div className="px-3 py-3 space-y-2 flex-1 overflow-y-auto">
         {data.map((item, index) => {
           const isActive = index === activeIndex && !isWatchlistActive;
           const impact = item.impact || 'UNKNOWN';
@@ -52,24 +52,35 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
               className={`news-item-card ${isActive ? 'active' : ''}`}
               onClick={() => onSelect(index)}
             >
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-[15px] text-gray-100 leading-snug">
+              {/* Row 1: Company name + chevron */}
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-semibold text-[14px] text-gray-100 leading-snug flex-1">
                   {item.company_name || 'Unknown'}
                 </h3>
-                <span className={`impact-badge ${getImpactBadgeClass(impact)} flex-shrink-0`}>
-                  {impact}
-                </span>
+                <svg className="card-chevron w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </div>
-              {item.category && (
-                <span className={`category-tag ${getCategoryClass(item.category)} mt-1.5 inline-flex`}>
-                  {item.category}
-                </span>
-              )}
-              <p className="text-[13px] text-gray-400 mt-2 news-summary leading-relaxed">
+
+              {/* Row 2: Impact + Category on one line */}
+              <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium">
+                <span className={getImpactTextClass(impact)}>{impact}</span>
+                {item.category && (
+                  <>
+                    <span className="text-gray-700">·</span>
+                    <span className={getCategoryTextClass(item.category)}>{item.category}</span>
+                  </>
+                )}
+              </div>
+
+              {/* Row 3: Summary */}
+              <p className="text-[12.5px] text-gray-400 mt-2 news-summary leading-relaxed">
                 {item.summary || 'No summary available.'}
               </p>
-              <div className="mt-3">
-                <span className="text-xs text-gray-500">{time}</span>
+
+              {/* Row 4: Time */}
+              <div className="mt-2.5">
+                <span className="text-[11px] text-gray-600">{time}</span>
               </div>
             </div>
           );

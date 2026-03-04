@@ -12,6 +12,31 @@ export function getCategoryClass(category) {
   return 'cat-general';
 }
 
+export function getCategoryTextClass(category) {
+  if (!category) return 'cat-text-general';
+  const c = category.toLowerCase();
+  if (c.includes('financial'))    return 'cat-text-financial';
+  if (c.includes('leadership'))   return 'cat-text-leadership';
+  if (c.includes('raising') || c.includes('changing shares')) return 'cat-text-capital';
+  if (c.includes('dividend') || c.includes('shareholder'))    return 'cat-text-dividends';
+  if (c.includes('merger') || c.includes('acquisition') || c.includes('partnership')) return 'cat-text-mergers';
+  if (c.includes('order') || c.includes('business wins'))     return 'cat-text-orders';
+  if (c.includes('operation') || c.includes('expansion'))     return 'cat-text-operations';
+  if (c.includes('legal') || c.includes('compliance') || c.includes('credit')) return 'cat-text-legal';
+  return 'cat-text-general';
+}
+
+export function getImpactTextClass(impact) {
+  if (!impact) return 'impact-text-neutral';
+  const lower = impact.toLowerCase();
+  if (lower === 'beat' || lower === 'strongly positive') return 'impact-text-strongly-positive';
+  if (lower === 'positive') return 'impact-text-positive';
+  if (lower === 'negative') return 'impact-text-negative';
+  if (lower === 'missed' || lower === 'strongly negative') return 'impact-text-strongly-negative';
+  if (lower === 'matched') return 'impact-text-matched';
+  return 'impact-text-neutral';
+}
+
 export function getImpactBadgeClass(impact) {
   if (!impact) return '';
   const lower = impact.toLowerCase();
