@@ -8,6 +8,7 @@ const OTP_LENGTH = 4;
 export default function LoginPage({ onLoginSuccess, onNavigate }) {
   const [step, setStep] = useState('phone');
   const [phone, setPhone] = useState('');
+  const [name, setName] = useState('');
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -30,6 +31,10 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
   const handleSendOTP = async (e) => {
     e?.preventDefault();
     setError('');
+    if (!name.trim()) {
+      setError('Please enter your name.');
+      return;
+    }
     const cleaned = phone.replace(/\s|-/g, '');
     if (!PHONE_REGEX.test(cleaned)) {
       setError('Please enter a valid 10-digit mobile number.');
@@ -99,7 +104,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     setLoading(true);
     setError('');
     try {
-      const result = await verifyOTP(phone.replace(/\s|-/g, ''), code);
+      const result = await verifyOTP(phone.replace(/\s|-/g, ''), code, name.trim());
       onLoginSuccess(result);
     } catch (err) {
       setError(err.message);
@@ -133,6 +138,18 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                 <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">Login with WhatsApp</h2>
                 <p className="text-xs text-gray-500 mb-6 font-light">We'll send a verification code to your WhatsApp</p>
 
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Your Name</label>
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); setError(''); }}
+                  className="w-full h-11 px-3.5 mb-4 bg-[#161b22] rounded-lg text-sm text-gray-100 placeholder-gray-600 border border-white/[0.06] outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                  autoFocus
+                  disabled={loading}
+                  maxLength={100}
+                />
+
                 <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
                 <div className="flex items-center gap-2 mb-5">
                   <span className="flex items-center h-11 px-3.5 bg-[#161b22] rounded-lg text-sm text-gray-400 border border-white/[0.06] font-medium">
@@ -146,7 +163,6 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value.replace(/\D/g, '')); setError(''); }}
                     className="flex-1 h-11 px-3.5 bg-[#161b22] rounded-lg text-sm text-gray-100 placeholder-gray-600 border border-white/[0.06] outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                    autoFocus
                     disabled={loading}
                   />
                 </div>
@@ -155,7 +171,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
 
                 <button
                   type="submit"
-                  disabled={loading || phone.length < 10}
+                  disabled={loading || phone.length < 10 || !name.trim()}
                   className="w-full h-11 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/30 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 disabled:shadow-none"
                 >
                   {loading ? (
