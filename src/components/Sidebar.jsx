@@ -5,7 +5,7 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
     <aside className="w-[380px] border-r border-white/5 overflow-y-auto bg-[#0a0a0a] flex-shrink-0 flex flex-col">
       {/* Header */}
       <div className="sticky top-0 bg-[#0a0a0a] z-10 px-5 pt-4 border-b border-white/5">
-        <h1 className="text-xl font-bold text-gray-100">StockHub</h1>
+        <h1 className="text-xl font-bold text-gray-100">RITO</h1>
 
         {/* Tabs */}
         <div className="flex items-center gap-4 mt-3">

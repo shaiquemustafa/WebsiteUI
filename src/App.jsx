@@ -234,7 +234,7 @@ function App() {
           {/* Mobile header with tabs */}
           <div className="sticky top-0 bg-[#0a0a0a] z-10 px-4 border-b border-white/5">
             <div className="flex items-center justify-between pt-3 pb-2">
-              <h1 className="text-lg font-bold text-gray-100">StockHub</h1>
+              <h1 className="text-lg font-bold text-gray-100">RITO</h1>
               <button
                 onClick={logout}
                 className="text-xs text-gray-500 hover:text-red-400 transition px-2 py-1"
