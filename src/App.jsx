@@ -18,7 +18,9 @@ function App() {
   const [user, setUser] = useState(null);
 
   // View state: 'news' | 'watchlist' | 'privacy' | 'terms'
-  const [view, setView] = useState('news');
+  // Check if URL hash says #watchlist on load
+  const initialView = window.location.hash === '#watchlist' ? 'watchlist' : 'news';
+  const [view, setView] = useState(initialView);
 
   // Data state
   const [data, setData] = useState([]);
@@ -146,7 +148,7 @@ function App() {
 
   // Loading market data
   if (loading) {
-    return (
+  return (
       <div className="flex items-center justify-center h-screen bg-[#06080a]">
         <div className="text-center">
           <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -172,7 +174,7 @@ function App() {
             className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20"
           >
             Retry
-          </button>
+        </button>
         </div>
       </div>
     );
