@@ -1,4 +1,4 @@
-import { getImpactBadgeClass } from '../utils/format';
+import { getImpactBadgeClass, getCategoryClass } from '../utils/format';
 
 export default function MobileList({ data, onSelect }) {
   return (
@@ -30,7 +30,7 @@ export default function MobileList({ data, onSelect }) {
               <div className="flex items-center gap-2.5 mt-3 flex-wrap">
                 <span className="text-xs text-gray-500">{time}</span>
                 {item.category && (
-                  <span className="category-tag">
+                  <span className={`category-tag ${getCategoryClass(item.category)}`}>
                     {item.category}
                   </span>
                 )}

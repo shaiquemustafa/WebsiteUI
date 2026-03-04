@@ -1,4 +1,4 @@
-import { getImpactBadgeClass, formatNumber, formatDate, sortQuarters } from '../utils/format';
+import { getImpactBadgeClass, getCategoryClass, formatNumber, formatDate, sortQuarters } from '../utils/format';
 
 export default function DetailPanel({ item, onBack, isMobile }) {
   if (!item) {
@@ -72,7 +72,7 @@ export default function DetailPanel({ item, onBack, isMobile }) {
               {item.category && (
                 <>
                   <span className="text-gray-700">·</span>
-                  <span className="category-tag">{item.category}</span>
+                  <span className={`category-tag ${getCategoryClass(item.category)}`}>{item.category}</span>
                 </>
               )}
               <span className="text-gray-700">·</span>

@@ -1,3 +1,17 @@
+export function getCategoryClass(category) {
+  if (!category) return '';
+  const c = category.toLowerCase();
+  if (c.includes('financial'))    return 'cat-financial';
+  if (c.includes('leadership'))   return 'cat-leadership';
+  if (c.includes('raising') || c.includes('changing shares')) return 'cat-capital';
+  if (c.includes('dividend') || c.includes('shareholder'))    return 'cat-dividends';
+  if (c.includes('merger') || c.includes('acquisition') || c.includes('partnership')) return 'cat-mergers';
+  if (c.includes('order') || c.includes('business wins'))     return 'cat-orders';
+  if (c.includes('operation') || c.includes('expansion'))     return 'cat-operations';
+  if (c.includes('legal') || c.includes('compliance') || c.includes('credit')) return 'cat-legal';
+  return 'cat-general';
+}
+
 export function getImpactBadgeClass(impact) {
   if (!impact) return '';
   const lower = impact.toLowerCase();

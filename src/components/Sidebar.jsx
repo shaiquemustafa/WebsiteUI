@@ -1,4 +1,4 @@
-import { getImpactBadgeClass } from '../utils/format';
+import { getImpactBadgeClass, getCategoryClass } from '../utils/format';
 
 export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, onEditWatchlist, isWatchlistActive }) {
   return (
@@ -66,7 +66,7 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
               <div className="flex items-center gap-2.5 mt-3 flex-wrap">
                 <span className="text-xs text-gray-500">{time}</span>
                 {item.category && (
-                  <span className="category-tag">
+                  <span className={`category-tag ${getCategoryClass(item.category)}`}>
                     {item.category}
                   </span>
                 )}

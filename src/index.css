@@ -105,7 +105,7 @@ body {
   border: 1px solid rgba(248, 81, 73, 0.3);
 }
 
-/* ─── Category Tag ──────────────────────────────────────────────────── */
+/* ─── Category Tags (color-coded) ───────────────────────────────────── */
 .category-tag {
   display: inline-flex;
   align-items: center;
@@ -113,10 +113,74 @@ body {
   border-radius: 9999px;
   font-size: 0.7rem;
   font-weight: 500;
+  white-space: nowrap;
+  /* Default fallback */
   color: #8b949e;
   background: rgba(139, 148, 158, 0.1);
   border: 1px solid rgba(139, 148, 158, 0.15);
-  white-space: nowrap;
+}
+
+/* Financial Results — Purple */
+.cat-financial {
+  color: #d2a8ff;
+  background: rgba(210, 168, 255, 0.10);
+  border: 1px solid rgba(210, 168, 255, 0.20);
+}
+
+/* Leadership Changes — Amber */
+.cat-leadership {
+  color: #e3b341;
+  background: rgba(227, 179, 65, 0.10);
+  border: 1px solid rgba(227, 179, 65, 0.20);
+}
+
+/* Raising Money & Changing Shares — Cyan */
+.cat-capital {
+  color: #56d4dd;
+  background: rgba(86, 212, 221, 0.10);
+  border: 1px solid rgba(86, 212, 221, 0.20);
+}
+
+/* Dividends/Shareholder Rewards — Green */
+.cat-dividends {
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.10);
+  border: 1px solid rgba(63, 185, 80, 0.20);
+}
+
+/* Mergers, Acquisitions & Partnerships — Pink */
+.cat-mergers {
+  color: #f778ba;
+  background: rgba(247, 120, 186, 0.10);
+  border: 1px solid rgba(247, 120, 186, 0.20);
+}
+
+/* New Orders & Business Wins — Blue */
+.cat-orders {
+  color: #58a6ff;
+  background: rgba(88, 166, 255, 0.10);
+  border: 1px solid rgba(88, 166, 255, 0.20);
+}
+
+/* Operations Expansions — Orange */
+.cat-operations {
+  color: #f0883e;
+  background: rgba(240, 136, 62, 0.10);
+  border: 1px solid rgba(240, 136, 62, 0.20);
+}
+
+/* Legal, Compliance & Credit — Red */
+.cat-legal {
+  color: #f85149;
+  background: rgba(248, 81, 73, 0.08);
+  border: 1px solid rgba(248, 81, 73, 0.18);
+}
+
+/* General Investor Info — Gray (default) */
+.cat-general {
+  color: #8b949e;
+  background: rgba(139, 148, 158, 0.10);
+  border: 1px solid rgba(139, 148, 158, 0.15);
 }
 
 /* ─── News List Items ───────────────────────────────────────────────── */
