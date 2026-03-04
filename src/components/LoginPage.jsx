@@ -137,7 +137,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
               <span className="text-2xl font-black text-white">R</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-100">Welcome to RITO</h1>
-            <p className="text-sm text-gray-500 mt-1">Live Market Predictions & Insights</p>
+            <p className="text-sm text-gray-500 mt-1">AI Powered Live Market Updates</p>
           </div>
 
           {/* Card */}
@@ -286,7 +286,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
             <p>
               RITO levels the playing field for everyday investors by turning fast, complex market noise into clear,
               timely insight. We track real-time announcements and evolving narratives, then translate them into
-              plain-English takeaways and news-driven stock suggestions — so you don't surrender your edge to
+              plain-English takeaways and news-driven news suggestions — so you don't surrender your edge to
               institutional timelines and tools.
             </p>
             <p>
