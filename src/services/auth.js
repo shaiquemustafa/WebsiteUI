@@ -124,6 +124,20 @@ export async function updateUserName(name) {
   return data;
 }
 
+export async function recordVisit() {
+  const token = getToken();
+  if (!token) return;
+
+  try {
+    await fetch(`${API_BASE}/api/events/visit`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    // Silent fail — don't block the user experience
+  }
+}
+
 export function logout() {
   removeToken();
   window.location.reload();

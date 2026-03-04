@@ -8,7 +8,7 @@ import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsPage from './components/TermsPage';
 import Footer from './components/Footer';
 import { fetchUIData } from './services/api';
-import { isLoggedIn, fetchCurrentUser, getStoredUser, logout } from './services/auth';
+import { isLoggedIn, fetchCurrentUser, getStoredUser, logout, recordVisit } from './services/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
 
@@ -43,6 +43,7 @@ function App() {
         const freshUser = await fetchCurrentUser();
         if (freshUser) {
           setUser(freshUser);
+          recordVisit(); // Record page visit event (fire-and-forget)
         } else {
           setUser(null);
         }
