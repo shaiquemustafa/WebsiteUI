@@ -2,11 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { sendOTP, verifyOTP } from '../services/auth';
 import Footer from './Footer';
 
-const PHONE_REGEX = /^[6-9]\d{9}$/; // Indian 10-digit mobile
+const PHONE_REGEX = /^[6-9]\d{9}$/;
 const OTP_LENGTH = 4;
 
 export default function LoginPage({ onLoginSuccess, onNavigate }) {
-  const [step, setStep] = useState('phone'); // 'phone' | 'otp'
+  const [step, setStep] = useState('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
@@ -15,31 +15,26 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
 
   const otpRefs = useRef([]);
 
-  // Countdown timer for resend
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [countdown]);
 
-  // Auto-focus first OTP box when switching to OTP step
   useEffect(() => {
     if (step === 'otp' && otpRefs.current[0]) {
       otpRefs.current[0].focus();
     }
   }, [step]);
 
-  // ── Send OTP ──────────────────────────────────────────────────────
   const handleSendOTP = async (e) => {
     e?.preventDefault();
     setError('');
-
     const cleaned = phone.replace(/\s|-/g, '');
     if (!PHONE_REGEX.test(cleaned)) {
       setError('Please enter a valid 10-digit mobile number.');
       return;
     }
-
     setLoading(true);
     try {
       await sendOTP(cleaned);
@@ -52,7 +47,6 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     }
   };
 
-  // ── Resend OTP ────────────────────────────────────────────────────
   const handleResend = async () => {
     if (countdown > 0) return;
     setOtp(Array(OTP_LENGTH).fill(''));
@@ -60,19 +54,15 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     await handleSendOTP();
   };
 
-  // ── OTP input handling ────────────────────────────────────────────
   const handleOtpChange = (index, value) => {
     if (value && !/^\d$/.test(value)) return;
-
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
     setError('');
-
     if (value && index < OTP_LENGTH - 1) {
       otpRefs.current[index + 1]?.focus();
     }
-
     if (value && index === OTP_LENGTH - 1 && newOtp.every(d => d)) {
       handleVerifyOTP(newOtp.join(''));
     }
@@ -88,29 +78,24 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     e.preventDefault();
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH);
     if (!pasted) return;
-
     const newOtp = [...otp];
     for (let i = 0; i < pasted.length; i++) {
       newOtp[i] = pasted[i];
     }
     setOtp(newOtp);
-
     const focusIdx = Math.min(pasted.length, OTP_LENGTH - 1);
     otpRefs.current[focusIdx]?.focus();
-
     if (pasted.length === OTP_LENGTH) {
       handleVerifyOTP(pasted);
     }
   };
 
-  // ── Verify OTP ────────────────────────────────────────────────────
   const handleVerifyOTP = async (otpStr) => {
     const code = otpStr || otp.join('');
     if (code.length !== OTP_LENGTH) {
       setError('Please enter the complete 4-digit OTP.');
       return;
     }
-
     setLoading(true);
     setError('');
     try {
@@ -125,33 +110,32 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
+    <div className="min-h-screen bg-[#06080a] flex flex-col">
       {/* Main login area */}
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
-          {/* Logo / Brand */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 mb-4">
-              <span className="text-2xl font-black text-white">R</span>
+          {/* Logo */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 mb-5 shadow-lg shadow-blue-500/20">
+              <span className="text-xl font-black text-white">R</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-100">Welcome to RITO</h1>
-            <p className="text-sm text-gray-500 mt-1">AI Powered Live Market Updates</p>
+            <h1 className="text-[22px] font-bold text-gray-100 tracking-tight">Welcome to RITO</h1>
+            <p className="text-sm text-gray-500 mt-1.5 font-light">AI Powered Live Market Updates</p>
           </div>
 
           {/* Card */}
-          <div className="bg-[#18181b] rounded-2xl border border-white/[0.06] p-6 shadow-xl">
+          <div className="bg-[#0d1117] rounded-2xl border border-white/[0.06] p-7 shadow-2xl shadow-black/40">
 
-            {/* ──── Phone Step ──── */}
+            {/* Phone Step */}
             {step === 'phone' && (
               <form onSubmit={handleSendOTP}>
-                <h2 className="text-lg font-semibold text-gray-200 mb-1">Login with WhatsApp</h2>
-                <p className="text-xs text-gray-500 mb-5">We'll send a verification code to your WhatsApp</p>
+                <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">Login with WhatsApp</h2>
+                <p className="text-xs text-gray-500 mb-6 font-light">We'll send a verification code to your WhatsApp</p>
 
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">Mobile Number</label>
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="flex items-center h-11 px-3 bg-[#27272a] rounded-lg text-sm text-gray-400 border border-white/[0.06]">
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
+                <div className="flex items-center gap-2 mb-5">
+                  <span className="flex items-center h-11 px-3.5 bg-[#161b22] rounded-lg text-sm text-gray-400 border border-white/[0.06] font-medium">
                     +91
                   </span>
                   <input
@@ -161,18 +145,18 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                     placeholder="Enter 10-digit number"
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value.replace(/\D/g, '')); setError(''); }}
-                    className="flex-1 h-11 px-3 bg-[#27272a] rounded-lg text-sm text-gray-100 placeholder-gray-600 border border-white/[0.06] outline-none focus:border-blue-500 transition"
+                    className="flex-1 h-11 px-3.5 bg-[#161b22] rounded-lg text-sm text-gray-100 placeholder-gray-600 border border-white/[0.06] outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-all"
                     autoFocus
                     disabled={loading}
                   />
                 </div>
 
-                {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
+                {error && <p className="text-red-400/90 text-xs mb-3 font-medium">{error}</p>}
 
                 <button
                   type="submit"
                   disabled={loading || phone.length < 10}
-                  className="w-full h-11 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                  className="w-full h-11 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/30 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 disabled:shadow-none"
                 >
                   {loading ? (
                     <>
@@ -191,12 +175,12 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
               </form>
             )}
 
-            {/* ──── OTP Step ──── */}
+            {/* OTP Step */}
             {step === 'otp' && (
               <div>
                 <button
                   onClick={() => { setStep('phone'); setOtp(Array(OTP_LENGTH).fill('')); setError(''); }}
-                  className="text-xs text-gray-500 hover:text-gray-300 mb-3 flex items-center gap-1 transition"
+                  className="text-xs text-gray-500 hover:text-gray-300 mb-4 flex items-center gap-1 transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -204,13 +188,12 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                   Change number
                 </button>
 
-                <h2 className="text-lg font-semibold text-gray-200 mb-1">Enter OTP</h2>
-                <p className="text-xs text-gray-500 mb-5">
+                <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">Enter OTP</h2>
+                <p className="text-xs text-gray-500 mb-6 font-light">
                   Code sent to <span className="text-gray-300 font-medium">+91 {phone}</span> on WhatsApp
                 </p>
 
-                {/* OTP Boxes */}
-                <div className="flex justify-center gap-2.5 mb-4" onPaste={handleOtpPaste}>
+                <div className="flex justify-center gap-3 mb-5" onPaste={handleOtpPaste}>
                   {otp.map((digit, i) => (
                     <input
                       key={i}
@@ -222,17 +205,17 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
                       disabled={loading}
-                      className="w-11 h-13 text-center text-xl font-bold bg-[#27272a] text-gray-100 border border-white/[0.06] rounded-lg outline-none focus:border-blue-500 transition disabled:opacity-50"
+                      className="w-12 h-14 text-center text-xl font-bold bg-[#161b22] text-gray-100 border border-white/[0.06] rounded-xl outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-all disabled:opacity-50"
                     />
                   ))}
                 </div>
 
-                {error && <p className="text-red-400 text-xs mb-3 text-center">{error}</p>}
+                {error && <p className="text-red-400/90 text-xs mb-3 text-center font-medium">{error}</p>}
 
                 <button
                   onClick={() => handleVerifyOTP()}
                   disabled={loading || otp.some(d => !d)}
-                  className="w-full h-11 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                  className="w-full h-11 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/30 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 disabled:shadow-none"
                 >
                   {loading ? (
                     <>
@@ -244,8 +227,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                   )}
                 </button>
 
-                {/* Resend */}
-                <div className="text-center mt-4">
+                <div className="text-center mt-5">
                   {countdown > 0 ? (
                     <p className="text-xs text-gray-600">
                       Resend OTP in <span className="text-gray-400 font-medium">{countdown}s</span>
@@ -254,7 +236,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                     <button
                       onClick={handleResend}
                       disabled={loading}
-                      className="text-xs text-blue-400 hover:text-blue-300 font-medium transition"
+                      className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
                     >
                       Didn't receive it? Resend OTP
                     </button>
@@ -264,25 +246,25 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
             )}
           </div>
 
-          {/* Terms text */}
-          <p className="text-center text-[10px] text-gray-700 mt-4">
+          {/* Terms */}
+          <p className="text-center text-[10px] text-gray-600 mt-5">
             By logging in, you agree to RITO's{' '}
-            <button onClick={() => onNavigate?.('terms')} className="text-gray-500 hover:text-gray-400 underline transition">
+            <button onClick={() => onNavigate?.('terms')} className="text-gray-500 hover:text-gray-400 underline transition-colors">
               Terms of Service
             </button>{' '}
             &{' '}
-            <button onClick={() => onNavigate?.('privacy')} className="text-gray-500 hover:text-gray-400 underline transition">
+            <button onClick={() => onNavigate?.('privacy')} className="text-gray-500 hover:text-gray-400 underline transition-colors">
               Privacy Policy
             </button>
           </p>
         </div>
       </div>
 
-      {/* ── About RITO Section ─────────────────────────────────────── */}
-      <div className="border-t border-white/[0.04] bg-[#0a0a0a]">
-        <div className="max-w-2xl mx-auto px-6 py-10">
-          <h2 className="text-lg font-bold text-gray-200 mb-3 text-center">About RITO</h2>
-          <div className="text-xs text-gray-500 leading-relaxed space-y-3">
+      {/* About RITO Section */}
+      <div className="border-t border-white/[0.03] bg-[#06080a]">
+        <div className="max-w-2xl mx-auto px-6 py-12">
+          <h2 className="text-base font-semibold text-gray-300 mb-4 text-center tracking-tight">About RITO</h2>
+          <div className="text-sm text-gray-500 leading-relaxed space-y-4">
             <p>
               RITO levels the playing field for everyday investors by turning fast, complex market noise into clear,
               timely insight. We track real-time announcements and evolving narratives, then translate them into
@@ -292,8 +274,8 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
             <p>
               Instead of scattered headlines, you get the <span className="text-gray-400 font-medium">'story of the stock'</span>:
               what changed, why it matters, and where to dig deeper. Our approach centers on{' '}
-              <span className="text-green-400/80 font-medium">Speed</span>,{' '}
-              <span className="text-yellow-400/80 font-medium">Clarity</span> and{' '}
+              <span className="text-green-400/70 font-medium">Speed</span>,{' '}
+              <span className="text-yellow-400/70 font-medium">Clarity</span> and{' '}
               <span className="text-gray-300 font-medium">Transparency</span> — helping you separate signal from
               chatter and act with confidence.
             </p>
@@ -305,8 +287,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
           </div>
         </div>
 
-        {/* Compact footer on login page */}
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-8">
           <Footer onNavigate={onNavigate} compact />
         </div>
       </div>

@@ -28,17 +28,15 @@ function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showDetail, setShowDetail] = useState(false);
 
-  // ── Auth check on mount ───────────────────────────────────────────
+  // Auth check on mount
   useEffect(() => {
     const checkAuth = async () => {
       if (!isLoggedIn()) {
         setAuthChecked(true);
         return;
       }
-
       const stored = getStoredUser();
       if (stored) setUser(stored);
-
       try {
         const freshUser = await fetchCurrentUser();
         if (freshUser) {
@@ -51,24 +49,20 @@ function App() {
       }
       setAuthChecked(true);
     };
-
     checkAuth();
   }, []);
 
-  // ── Handle login success from LoginPage ───────────────────────────
   const handleLoginSuccess = (result) => {
     setUser(result.user);
   };
 
-  // ── Navigation helper ─────────────────────────────────────────────
   const handleNavigate = (page) => {
-    setView(page); // 'privacy', 'terms', 'news', 'watchlist'
+    setView(page);
   };
 
-  // ── Fetch market data (only when logged in) ───────────────────────
+  // Fetch market data
   useEffect(() => {
     if (!user) return;
-
     const load = async () => {
       try {
         setLoading(true);
@@ -86,7 +80,7 @@ function App() {
     return () => clearInterval(interval);
   }, [user]);
 
-  // ── Responsive breakpoint ─────────────────────────────────────────
+  // Responsive
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -103,31 +97,30 @@ function App() {
     if (isMobile) setShowDetail(true);
   };
 
-  // ── Auth loading state ────────────────────────────────────────────
+  // Auth loading
   if (!authChecked) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0a0a0a]">
+      <div className="flex items-center justify-center h-screen bg-[#06080a]">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400 text-lg">Loading...</p>
+          <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 text-sm">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // ── Not logged in ─────────────────────────────────────────────────
+  // Not logged in
   if (!user) {
-    // Show Privacy Policy or Terms as standalone pages (no login required)
     if (view === 'privacy') {
       return (
-        <div className="min-h-screen bg-[#0a0a0a]">
+        <div className="min-h-screen bg-[#06080a]">
           <PrivacyPolicyPage onBack={() => setView('news')} />
         </div>
       );
     }
     if (view === 'terms') {
       return (
-        <div className="min-h-screen bg-[#0a0a0a]">
+        <div className="min-h-screen bg-[#06080a]">
           <TermsPage onBack={() => setView('news')} />
         </div>
       );
@@ -135,29 +128,29 @@ function App() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
   }
 
-  // ── Logged in: Privacy / Terms pages ──────────────────────────────
+  // Logged in: standalone pages
   if (view === 'privacy') {
     return (
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen bg-[#06080a]">
         <PrivacyPolicyPage onBack={() => setView('news')} />
       </div>
     );
   }
   if (view === 'terms') {
     return (
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen bg-[#06080a]">
         <TermsPage onBack={() => setView('news')} />
       </div>
     );
   }
 
-  // ── Loading market data ───────────────────────────────────────────
+  // Loading market data
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0a0a0a]">
+      <div className="flex items-center justify-center h-screen bg-[#06080a]">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400 text-lg">Loading market data...</p>
+          <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 text-sm">Loading market data...</p>
         </div>
       </div>
     );
@@ -165,12 +158,19 @@ function App() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0a0a0a]">
+      <div className="flex items-center justify-center h-screen bg-[#06080a]">
         <div className="text-center max-w-md px-6">
-          <div className="text-5xl mb-4">📊</div>
-          <h2 className="text-xl font-bold text-gray-200 mb-2">No Data Available</h2>
-          <p className="text-gray-500 text-sm">{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-200 mb-1.5 tracking-tight">No Data Available</h2>
+          <p className="text-gray-500 text-sm mb-5">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20"
+          >
             Retry
           </button>
         </div>
@@ -180,17 +180,21 @@ function App() {
 
   if (!data.length) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0a0a0a]">
+      <div className="flex items-center justify-center h-screen bg-[#06080a]">
         <div className="text-center">
-          <div className="text-5xl mb-4">📭</div>
-          <h2 className="text-xl font-bold text-gray-200 mb-2">No Predictions Yet</h2>
-          <p className="text-gray-500">Waiting for market announcements to be analyzed...</p>
+          <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-200 mb-1.5 tracking-tight">No Updates Yet</h2>
+          <p className="text-gray-500 text-sm">Waiting for market announcements to be analyzed...</p>
         </div>
       </div>
     );
   }
 
-  // ── Decide what the main content area shows ────────────────────────
+  // Main content area
   const mainContent = view === 'watchlist' ? (
     <div className="flex flex-col min-h-full">
       <div className="flex-1">
@@ -207,10 +211,10 @@ function App() {
     </div>
   );
 
-  // ── Main app (logged-in view) ─────────────────────────────────────
+  // Main app
   return (
-    <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">
-      {/* Desktop: sidebar + main content */}
+    <div className="flex h-screen bg-[#06080a] overflow-hidden">
+      {/* Desktop */}
       {!isMobile && (
         <>
           <Sidebar
@@ -222,32 +226,36 @@ function App() {
             onEditWatchlist={() => setView(view === 'watchlist' ? 'news' : 'watchlist')}
             isWatchlistActive={view === 'watchlist'}
           />
-          <main className="flex-1 p-6 overflow-y-auto">
+          <main className="flex-1 p-8 overflow-y-auto">
             {mainContent}
           </main>
         </>
       )}
 
-      {/* Mobile: tabs or detail */}
+      {/* Mobile: list view */}
       {isMobile && !showDetail && (
         <main className="flex-1 overflow-y-auto">
-          {/* Mobile header with tabs */}
-          <div className="sticky top-0 bg-[#0a0a0a] z-10 px-4 border-b border-white/5">
-            <div className="flex items-center justify-between pt-3 pb-2">
-              <h1 className="text-lg font-bold text-gray-100">RITO</h1>
+          <div className="sticky top-0 bg-[#06080a]/95 backdrop-blur-md z-10 px-4 border-b border-white/[0.04]">
+            <div className="flex items-center justify-between pt-3.5 pb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                  <span className="text-xs font-black text-white">R</span>
+                </div>
+                <h1 className="text-base font-bold text-gray-100 tracking-tight">RITO</h1>
+              </div>
               <button
                 onClick={logout}
-                className="text-xs text-gray-500 hover:text-red-400 transition px-2 py-1"
+                className="text-[11px] text-gray-600 hover:text-red-400 transition-colors px-2 py-1"
               >
                 Logout
               </button>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <button
                 onClick={() => setView('news')}
-                className={`pb-2.5 text-xs font-semibold transition border-b-2 ${
+                className={`pb-3 text-[13px] font-medium transition border-b-2 ${
                   view === 'news'
-                    ? 'text-gray-200 border-blue-500'
+                    ? 'text-gray-100 border-blue-500'
                     : 'text-gray-500 border-transparent hover:text-gray-300'
                 }`}
               >
@@ -255,9 +263,9 @@ function App() {
               </button>
               <button
                 onClick={() => setView('watchlist')}
-                className={`pb-2.5 text-xs font-semibold transition border-b-2 ${
+                className={`pb-3 text-[13px] font-medium transition border-b-2 ${
                   view === 'watchlist'
-                    ? 'text-gray-200 border-blue-500'
+                    ? 'text-gray-100 border-blue-500'
                     : 'text-gray-500 border-transparent hover:text-gray-300'
                 }`}
               >
@@ -280,6 +288,8 @@ function App() {
           </div>
         </main>
       )}
+
+      {/* Mobile: detail view */}
       {isMobile && view === 'news' && showDetail && (
         <main className="flex-1 p-4 overflow-y-auto">
           <DetailPanel item={data[selectedIndex]} onBack={() => setShowDetail(false)} isMobile />

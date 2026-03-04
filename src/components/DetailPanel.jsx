@@ -2,15 +2,19 @@ import { getImpactBadgeClass, formatNumber, formatDate, sortQuarters } from '../
 
 export default function DetailPanel({ item, onBack, isMobile }) {
   if (!item) {
-    return <p className="text-center text-gray-500 mt-20">Select a company to view details.</p>;
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="text-4xl mb-3 opacity-40">📊</div>
+          <p className="text-gray-500 text-sm">Select a company to view details</p>
+        </div>
+      </div>
+    );
   }
 
   const impact = item.impact || 'UNKNOWN';
-  const pctChange = parseFloat(item.percent_change || 0);
-  const pctColor = pctChange >= 0 ? 'positive' : 'negative';
-  const pctSymbol = pctChange >= 0 ? '▲' : '▼';
 
-  // Quarterly data — build quarter headers from all financial fields
+  // Quarterly data
   const quarterSet = new Set();
   const financialFields = [
     { key: 'sales', label: 'Sales' },
@@ -43,50 +47,69 @@ export default function DetailPanel({ item, onBack, isMobile }) {
     <>
       {/* Mobile back button */}
       {isMobile && onBack && (
-        <button onClick={onBack} className="mb-4 inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg text-gray-300 bg-white/5 hover:bg-white/10 transition">
-          ← Back
+        <button
+          onClick={onBack}
+          className="mb-5 inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
         </button>
       )}
 
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      {/* ── Header ──────────────────────────────────────────────────── */}
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">{item.company_name}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-[28px] font-bold text-gray-100 tracking-tight leading-tight">
+                {item.company_name}
+              </h1>
               <span className={`impact-badge ${getImpactBadgeClass(impact)}`}>{impact}</span>
             </div>
-            <p className="text-sm text-gray-500 mt-1">SCRIP: {item.scrip_cd}</p>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-xs text-gray-500 font-mono">SCRIP {item.scrip_cd}</span>
+              {item.category && (
+                <>
+                  <span className="text-gray-700">·</span>
+                  <span className="text-xs text-gray-500">{item.category}</span>
+                </>
+              )}
+              <span className="text-gray-700">·</span>
+              <span className="text-xs text-gray-500">{formatDate(item.news_time)}</span>
+            </div>
           </div>
           {item.pdf_link && (
-            <a href={item.pdf_link} target="_blank" rel="noopener noreferrer"
-              className="inline-block bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition flex-shrink-0">
+            <a
+              href={item.pdf_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-blue-600/10 text-blue-400 text-sm font-medium px-4 py-2.5 rounded-lg border border-blue-500/20 hover:bg-blue-600/20 hover:border-blue-500/30 transition-all flex-shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
               View PDF Report
             </a>
           )}
         </div>
-        <p className="text-sm text-gray-300 mt-3 leading-relaxed">{item.summary}</p>
-        <p className="text-xs text-gray-500 mt-2 italic">{item.rationale}</p>
-        <div className="text-xs text-gray-600 mt-2">
-          {item.category && <span className="mr-3">📁 {item.category}</span>}
-          <span>🕐 {formatDate(item.news_time)}</span>
+
+        {/* Summary */}
+        <div className="mt-5 bg-[#0d1117] rounded-xl border border-white/[0.04] p-5">
+          <p className="text-[15px] text-gray-300 leading-relaxed">{item.summary}</p>
+          {item.rationale && (
+            <p className="text-sm text-gray-500 mt-3 leading-relaxed italic">{item.rationale}</p>
+          )}
         </div>
       </div>
 
-      {/* Metric cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-        <div className="card">
-          <p className="metric-label">Prediction</p>
-          <p className={`metric-value ${parseFloat(item.mid_percentage) >= 0 ? 'positive' : 'negative'}`}>
-            {parseFloat(item.mid_percentage) >= 0 ? '▲' : '▼'} {item.price_range}
-          </p>
-        </div>
-
+      {/* ── Metric Cards ────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
         {item.current_price_bse && (
           <div className="card">
             <p className="metric-label">BSE Price</p>
             <p className="metric-value">₹{item.current_price_bse}</p>
-            <p className={`text-sm font-semibold ${pctColor}`}>{pctSymbol} {Math.abs(pctChange).toFixed(2)}%</p>
           </div>
         )}
 
@@ -101,7 +124,9 @@ export default function DetailPanel({ item, onBack, isMobile }) {
           <div className="card">
             <p className="metric-label">Target Price</p>
             <p className="metric-value">₹{formatNumber(item.target_price_mean)}</p>
-            {item.number_of_estimates && <p className="text-xs text-gray-500 mt-1">{item.number_of_estimates} estimates</p>}
+            {item.number_of_estimates && (
+              <p className="text-[11px] text-gray-600 mt-1.5">{item.number_of_estimates} analyst estimates</p>
+            )}
           </div>
         )}
 
@@ -120,55 +145,57 @@ export default function DetailPanel({ item, onBack, isMobile }) {
         )}
       </div>
 
-      {/* Analyst Consensus */}
+      {/* ── Analyst Consensus ───────────────────────────────────────── */}
       {hasConsensus && (
-        <div className="card mb-6">
-          <h2 className="text-lg font-bold text-gray-200 mb-3">Analyst Consensus</h2>
-          <div className="flex flex-wrap gap-3">
+        <div className="mb-8">
+          <h2 className="text-base font-semibold text-gray-200 mb-3 tracking-tight">Analyst Consensus</h2>
+          <div className="flex flex-wrap gap-2.5">
             {Object.entries(consensus).map(([rating, count]) => (
-              <div key={rating} className="text-center px-4 py-2 rounded-lg bg-white/5">
-                <p className="text-xs text-gray-400 capitalize">{rating.replace(/_/g, ' ')}</p>
-                <p className="text-xl font-bold text-gray-200">{count}</p>
+              <div key={rating} className="text-center px-5 py-3 rounded-xl bg-[#0d1117] border border-white/[0.04]">
+                <p className="text-[10px] text-gray-500 capitalize font-medium tracking-wide">{rating.replace(/_/g, ' ')}</p>
+                <p className="text-xl font-bold text-gray-200 mt-1">{count}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Quarterly Financials Table */}
+      {/* ── Quarterly Financials Table ──────────────────────────────── */}
       {hasQuarterly && (
-        <div className="card overflow-x-auto">
-          <h2 className="text-lg font-bold text-gray-200 mb-3">Quarterly Financials (₹ Cr)</h2>
-          <table className="w-full text-left min-w-[600px]">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="p-2.5 text-xs font-semibold text-gray-400">Metric</th>
-                {quarters.map(q => (
-                  <th key={q} className="p-2.5 text-xs font-semibold text-gray-400 text-right">{q}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {financialFields.map(({ key, label }) => {
-                const rowData = item[key];
-                if (!rowData || typeof rowData !== 'object') return null;
-                return (
-                  <tr key={key} className="border-b border-white/5 hover:bg-white/[0.02]">
-                    <td className="p-2.5 text-sm font-medium text-gray-300">{label}</td>
-                    {quarters.map(q => {
-                      const val = rowData[q];
-                      const isNeg = val != null && parseFloat(val) < 0;
-                      return (
-                        <td key={q} className={`p-2.5 text-sm text-right font-mono ${isNeg ? 'text-red-400' : 'text-gray-300'}`}>
-                          {val != null ? formatNumber(val) : '—'}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div>
+          <h2 className="text-base font-semibold text-gray-200 mb-3 tracking-tight">Quarterly Financials (₹ Cr)</h2>
+          <div className="bg-[#0d1117] rounded-xl border border-white/[0.04] overflow-x-auto">
+            <table className="w-full text-left min-w-[600px]">
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="px-4 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Metric</th>
+                  {quarters.map(q => (
+                    <th key={q} className="px-4 py-3 text-[11px] font-semibold text-gray-500 text-right uppercase tracking-wider">{q}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {financialFields.map(({ key, label }) => {
+                  const rowData = item[key];
+                  if (!rowData || typeof rowData !== 'object') return null;
+                  return (
+                    <tr key={key} className="border-b border-white/[0.03] hover:bg-white/[0.015] transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-300">{label}</td>
+                      {quarters.map(q => {
+                        const val = rowData[q];
+                        const isNeg = val != null && parseFloat(val) < 0;
+                        return (
+                          <td key={q} className={`px-4 py-3 text-sm text-right font-mono tabular-nums ${isNeg ? 'text-red-400/80' : 'text-gray-400'}`}>
+                            {val != null ? formatNumber(val) : '—'}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </>

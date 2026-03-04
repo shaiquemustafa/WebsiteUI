@@ -1,53 +1,55 @@
 /**
- * Groww-style footer for RITO.
- * Used on both login page (compact) and dashboard.
- *
+ * Premium footer for RITO.
  * Props:
- *   onNavigate(page) – 'privacy' | 'terms'   (opens the respective page)
- *   compact          – boolean                (smaller version for login)
+ *   onNavigate(page) – 'privacy' | 'terms'
+ *   compact          – boolean (smaller version for login page)
  */
 export default function Footer({ onNavigate, compact = false }) {
   const currentYear = new Date().getFullYear();
 
   if (compact) {
     return (
-      <footer className="mt-10 border-t border-white/[0.04] pt-5 pb-6 text-center">
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] text-gray-600">
-          <button onClick={() => onNavigate?.('privacy')} className="hover:text-gray-400 transition">
+      <footer className="mt-8 border-t border-white/[0.03] pt-5 pb-4 text-center">
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-[11px] text-gray-600">
+          <button onClick={() => onNavigate?.('privacy')} className="hover:text-gray-400 transition-colors">
             Privacy Policy
           </button>
           <span className="text-gray-800">·</span>
-          <button onClick={() => onNavigate?.('terms')} className="hover:text-gray-400 transition">
+          <button onClick={() => onNavigate?.('terms')} className="hover:text-gray-400 transition-colors">
             Terms & Conditions
           </button>
           <span className="text-gray-800">·</span>
-          <a href="mailto:elrond389@gmail.com" className="hover:text-gray-400 transition">
+          <a href="mailto:elrond389@gmail.com" className="hover:text-gray-400 transition-colors">
             Contact Us
           </a>
         </div>
-        <p className="text-[10px] text-gray-700 mt-2">© {currentYear} RITO. All rights reserved.</p>
+        <p className="text-[10px] text-gray-700 mt-2.5">© {currentYear} RITO. All rights reserved.</p>
       </footer>
     );
   }
 
-  // Full footer (dashboard / main app)
   return (
-    <footer className="border-t border-white/[0.06] mt-8 pt-6 pb-8 px-6">
+    <footer className="border-t border-white/[0.04] mt-10 pt-8 pb-8 px-2">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start gap-6">
           {/* Brand */}
           <div>
-            <h3 className="text-lg font-bold text-gray-200">RITO</h3>
-            <p className="text-xs text-gray-600 mt-1 max-w-xs leading-relaxed">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                <span className="text-[10px] font-black text-white">R</span>
+              </div>
+              <h3 className="text-sm font-bold text-gray-300 tracking-tight">RITO</h3>
+            </div>
+            <p className="text-xs text-gray-600 max-w-xs leading-relaxed">
               Real-time market insights and stock analysis for everyday investors.
             </p>
-            {/* Social links */}
+            {/* Social */}
             <div className="flex gap-3 mt-3">
               <a
                 href="https://www.facebook.com/share/1DLj3Ac3ta/?mibextid=wwXIfr"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 hover:text-gray-400 transition"
+                className="text-gray-700 hover:text-gray-400 transition-colors"
                 title="Facebook"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -58,7 +60,7 @@ export default function Footer({ onNavigate, compact = false }) {
                 href="https://www.instagram.com/rito_insights/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-600 hover:text-gray-400 transition"
+                className="text-gray-700 hover:text-gray-400 transition-colors"
                 title="Instagram"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -69,14 +71,14 @@ export default function Footer({ onNavigate, compact = false }) {
           </div>
 
           {/* Links */}
-          <div className="flex flex-wrap gap-x-8 gap-y-3 text-xs text-gray-500">
-            <button onClick={() => onNavigate?.('privacy')} className="hover:text-gray-300 transition">
+          <div className="flex flex-wrap gap-x-8 gap-y-3 text-xs text-gray-600">
+            <button onClick={() => onNavigate?.('privacy')} className="hover:text-gray-400 transition-colors">
               Privacy Policy
             </button>
-            <button onClick={() => onNavigate?.('terms')} className="hover:text-gray-300 transition">
+            <button onClick={() => onNavigate?.('terms')} className="hover:text-gray-400 transition-colors">
               Terms & Conditions
             </button>
-            <a href="mailto:elrond389@gmail.com" className="hover:text-gray-300 transition">
+            <a href="mailto:elrond389@gmail.com" className="hover:text-gray-400 transition-colors">
               Contact: elrond389@gmail.com
             </a>
           </div>
