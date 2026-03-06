@@ -189,38 +189,38 @@ export default function DetailPanel({ item, onBack, isMobile }) {
         const total = sortedRatings.reduce((sum, r) => sum + r.count, 0);
 
         return (
-          <div className="mb-10">
-            <h2 className="text-lg font-semibold text-gray-100 mb-4 tracking-tight">Analyst Consensus</h2>
-            <div className="bg-[#0d1117] rounded-xl border border-white/[0.04] p-6">
-              <div className="space-y-4">
+          <div className="mb-8">
+            <h2 className="text-base font-semibold text-gray-100 mb-3 tracking-tight">Analyst Consensus</h2>
+            <div className="bg-[#0d1117] rounded-xl border border-white/[0.04] p-4">
+              <div className="space-y-2">
                 {sortedRatings.map(({ rating, label, count, color }) => {
                   const percentage = (count / maxCount) * 100;
                   return (
-                    <div key={rating} className="flex items-center gap-4">
-                      <div className="w-24 flex-shrink-0">
-                        <p className="text-xs text-gray-400 font-medium">{label}</p>
+                    <div key={rating} className="flex items-center gap-3">
+                      <div className="w-20 flex-shrink-0">
+                        <p className="text-[11px] text-gray-400 font-medium">{label}</p>
                       </div>
                       <div className="flex-1 relative">
-                        <div className="h-8 bg-white/[0.03] rounded-lg overflow-hidden">
+                        <div className="h-6 bg-white/[0.03] rounded-md overflow-hidden">
                           <div
-                            className={`h-full ${color} rounded-lg transition-all duration-300 flex items-center justify-end pr-3`}
+                            className={`h-full ${color} rounded-md transition-all duration-300 flex items-center justify-end pr-2`}
                             style={{ width: `${percentage}%` }}
                           >
-                            {percentage > 15 && (
-                              <span className="text-xs font-bold text-white">{count}</span>
+                            {percentage > 20 && (
+                              <span className="text-[10px] font-bold text-white">{count}</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="w-12 text-right flex-shrink-0">
-                        <span className="text-sm font-semibold text-gray-300">{count}</span>
+                      <div className="w-10 text-right flex-shrink-0">
+                        <span className="text-xs font-semibold text-gray-300">{count}</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="mt-5 pt-4 border-t border-white/[0.04]">
-                <p className="text-xs text-gray-500 text-center">
+              <div className="mt-3 pt-3 border-t border-white/[0.04]">
+                <p className="text-[10px] text-gray-500 text-center">
                   Total: <span className="text-gray-400 font-semibold">{total} analysts</span>
                 </p>
               </div>
