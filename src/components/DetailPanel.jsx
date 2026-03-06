@@ -105,6 +105,19 @@ export default function DetailPanel({ item, onBack, isMobile }) {
 
       {/* ── Metric Cards ────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
+        {item.mkt_cap_cr && (
+          <div className="card">
+            <p className="metric-label">Market Cap</p>
+            <p className="metric-value">
+              {item.mkt_cap_cr >= 100000 
+                ? `₹${(item.mkt_cap_cr / 100000).toFixed(1)}L Cr`
+                : item.mkt_cap_cr >= 1000
+                ? `₹${(item.mkt_cap_cr / 1000).toFixed(1)}K Cr`
+                : `₹${formatNumber(item.mkt_cap_cr)} Cr`}
+            </p>
+          </div>
+        )}
+
         {item.current_price_bse && (
           <div className="card">
             <p className="metric-label">BSE Price</p>
@@ -145,19 +158,76 @@ export default function DetailPanel({ item, onBack, isMobile }) {
       </div>
 
       {/* ── Analyst Consensus ───────────────────────────────────────── */}
-      {hasConsensus && (
-        <div className="mb-10">
-          <h2 className="text-lg font-semibold text-gray-100 mb-4 tracking-tight">Analyst Consensus</h2>
-          <div className="flex flex-wrap gap-3">
-            {Object.entries(consensus).map(([rating, count]) => (
-              <div key={rating} className="text-center px-6 py-4 rounded-xl bg-[#0d1117] border border-white/[0.04]">
-                <p className="text-xs text-gray-500 capitalize font-medium tracking-wide">{rating.replace(/_/g, ' ')}</p>
-                <p className="text-2xl font-bold text-gray-100 mt-1.5">{count}</p>
+      {hasConsensus && (() => {
+        // Order: Strong Buy → Buy → Hold → Sell → Strong Sell
+        const ratingOrder = ['strong_buy', 'buy', 'hold', 'sell', 'strong_sell'];
+        const ratingLabels = {
+          'strong_buy': 'Strong Buy',
+          'buy': 'Buy',
+          'hold': 'Hold',
+          'sell': 'Sell',
+          'strong_sell': 'Strong Sell',
+        };
+        const ratingColors = {
+          'strong_buy': 'bg-green-500',
+          'buy': 'bg-green-400',
+          'hold': 'bg-yellow-500',
+          'sell': 'bg-orange-500',
+          'strong_sell': 'bg-red-500',
+        };
+        
+        const sortedRatings = ratingOrder
+          .filter(rating => consensus[rating] !== undefined)
+          .map(rating => ({
+            rating,
+            label: ratingLabels[rating],
+            count: consensus[rating],
+            color: ratingColors[rating],
+          }));
+        
+        const maxCount = Math.max(...sortedRatings.map(r => r.count), 1);
+        const total = sortedRatings.reduce((sum, r) => sum + r.count, 0);
+
+        return (
+          <div className="mb-10">
+            <h2 className="text-lg font-semibold text-gray-100 mb-4 tracking-tight">Analyst Consensus</h2>
+            <div className="bg-[#0d1117] rounded-xl border border-white/[0.04] p-6">
+              <div className="space-y-4">
+                {sortedRatings.map(({ rating, label, count, color }) => {
+                  const percentage = (count / maxCount) * 100;
+                  return (
+                    <div key={rating} className="flex items-center gap-4">
+                      <div className="w-24 flex-shrink-0">
+                        <p className="text-xs text-gray-400 font-medium">{label}</p>
+                      </div>
+                      <div className="flex-1 relative">
+                        <div className="h-8 bg-white/[0.03] rounded-lg overflow-hidden">
+                          <div
+                            className={`h-full ${color} rounded-lg transition-all duration-300 flex items-center justify-end pr-3`}
+                            style={{ width: `${percentage}%` }}
+                          >
+                            {percentage > 15 && (
+                              <span className="text-xs font-bold text-white">{count}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-12 text-right flex-shrink-0">
+                        <span className="text-sm font-semibold text-gray-300">{count}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+              <div className="mt-5 pt-4 border-t border-white/[0.04]">
+                <p className="text-xs text-gray-500 text-center">
+                  Total: <span className="text-gray-400 font-semibold">{total} analysts</span>
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Quarterly Financials Table ──────────────────────────────── */}
       {hasQuarterly && (
