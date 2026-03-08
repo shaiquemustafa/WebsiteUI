@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { searchStocks, getWatchlist, saveWatchlist } from '../services/api';
 
-const MIN_STOCKS = 3;
+const MIN_STOCKS = 4;
 const MAX_STOCKS = 15;
 
 export default function StockSelectionPage() {

@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { sendOTP, verifyOTP, updateUserName } from '../services/auth';
+import { searchStocks, saveWatchlist } from '../services/api';
 import Footer from './Footer';
 
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 const OTP_LENGTH = 4;
 
 export default function LoginPage({ onLoginSuccess, onNavigate }) {
-  const [step, setStep] = useState('phone');   // 'phone' | 'otp' | 'name'
+  const [step, setStep] = useState('phone');   // 'phone' | 'otp' | 'name' | 'watchlist'
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
@@ -14,6 +15,14 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [verifyResult, setVerifyResult] = useState(null); // holds the result from verify-otp
+  
+  // Watchlist onboarding state
+  const [watchlistQuery, setWatchlistQuery] = useState('');
+  const [watchlistResults, setWatchlistResults] = useState([]);
+  const [watchlistSearching, setWatchlistSearching] = useState(false);
+  const [selectedStocks, setSelectedStocks] = useState([]);
+  const [receiveAllUpdates, setReceiveAllUpdates] = useState(true);
+  const [relianceStock, setRelianceStock] = useState(null);
 
   const otpRefs = useRef([]);
   const nameRef = useRef(null);
@@ -137,7 +146,95 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     setError('');
     try {
       await updateUserName(name.trim());
-      // Update the stored result with the name and proceed
+      // Update the stored result with the name and proceed to watchlist onboarding
+      const updatedResult = {
+        ...verifyResult,
+        user: { ...verifyResult.user, name: name.trim() },
+      };
+      setVerifyResult(updatedResult);
+      setStep('watchlist'); // Go to watchlist onboarding step
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Step 4: Watchlist onboarding (new users only) ──
+  useEffect(() => {
+    if (step === 'watchlist' && !relianceStock && verifyResult?.token) {
+      // Search for Reliance Industries Limited and auto-select it
+      const searchReliance = async () => {
+        try {
+          const results = await searchStocks('Reliance Industries');
+          // Find Reliance Industries Limited
+          const reliance = results.find(
+            (s) => s.company_name && 
+            (s.company_name.toLowerCase().includes('reliance industries') || 
+             s.company_name.toLowerCase().includes('reliance limited'))
+          );
+          if (reliance) {
+            setRelianceStock(reliance);
+            setSelectedStocks([reliance]);
+          }
+        } catch (err) {
+          console.error('Failed to search Reliance:', err);
+        }
+      };
+      searchReliance();
+    }
+  }, [step, relianceStock, verifyResult]);
+
+  const handleWatchlistSearch = async (value) => {
+    setWatchlistQuery(value);
+    setError('');
+    if (!value.trim()) {
+      setWatchlistResults([]);
+      setWatchlistSearching(false);
+      return;
+    }
+    setWatchlistSearching(true);
+    try {
+      const results = await searchStocks(value);
+      const selectedCodes = new Set(selectedStocks.map((s) => s.bse_scrip_code));
+      setWatchlistResults(results.filter((r) => !selectedCodes.has(r.bse_scrip_code)));
+    } catch {
+      setWatchlistResults([]);
+    } finally {
+      setWatchlistSearching(false);
+    }
+  };
+
+  const addStock = (stock) => {
+    if (selectedStocks.length >= 15) {
+      setError('Maximum 15 stocks allowed.');
+      return;
+    }
+    if (selectedStocks.some((s) => s.bse_scrip_code === stock.bse_scrip_code)) return;
+    setSelectedStocks((prev) => [...prev, stock]);
+    setWatchlistQuery('');
+    setWatchlistResults([]);
+    setError('');
+  };
+
+  const removeStock = (code) => {
+    setSelectedStocks((prev) => prev.filter((s) => s.bse_scrip_code !== code));
+    setError('');
+  };
+
+  const handleSaveWatchlist = async () => {
+    if (selectedStocks.length < 4) {
+      setError('Please select at least 4 stocks to continue.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await saveWatchlist(
+        selectedStocks.map((s) => s.bse_scrip_code),
+        receiveAllUpdates
+      );
+      // Proceed to dashboard
       const updatedResult = {
         ...verifyResult,
         user: { ...verifyResult.user, name: name.trim() },
@@ -148,6 +245,15 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSkipWatchlist = () => {
+    // Skip watchlist and proceed to dashboard
+    const updatedResult = {
+      ...verifyResult,
+      user: { ...verifyResult.user, name: name.trim() },
+    };
+    onLoginSuccess(updatedResult);
   };
 
   return (
@@ -316,10 +422,161 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                       Saving...
                     </>
                   ) : (
-                    'Continue to RITO →'
+                    'Continue →'
                   )}
                 </button>
               </form>
+            )}
+
+            {/* ── Watchlist Step (new users only, skippable) ── */}
+            {step === 'watchlist' && (
+              <div>
+                <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">Build Your Watchlist</h2>
+                <p className="text-xs text-gray-500 mb-6 font-light">Select at least 4 companies to get personalized updates</p>
+
+                {/* Info box */}
+                <div className="bg-blue-500/[0.06] border border-blue-500/15 rounded-xl px-4 py-3 mb-4 flex items-start gap-2.5">
+                  <svg className="w-4 h-4 text-blue-400/70 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-xs text-blue-300/80 leading-relaxed">
+                    Select at least <span className="font-semibold text-blue-300">4 stocks</span>. Reliance Industries Limited is pre-selected for you.
+                  </p>
+                </div>
+
+                {/* Search */}
+                <div className="relative mb-4">
+                  <div className="flex items-center bg-[#161b22] rounded-xl border border-white/[0.06] focus-within:border-blue-500/40 focus-within:ring-1 focus-within:ring-blue-500/10 transition-all">
+                    <svg className="w-4 h-4 text-gray-600 ml-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search by company name or NSE symbol..."
+                      value={watchlistQuery}
+                      onChange={(e) => handleWatchlistSearch(e.target.value)}
+                      className="flex-1 h-11 px-3 bg-transparent text-sm text-gray-100 placeholder-gray-600 outline-none"
+                    />
+                    {watchlistSearching && (
+                      <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mr-3" />
+                    )}
+                  </div>
+
+                  {/* Dropdown */}
+                  {watchlistResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#0d1117] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 z-20 max-h-60 overflow-y-auto">
+                      {watchlistResults.map((stock) => (
+                        <button
+                          key={stock.bse_scrip_code}
+                          onClick={() => addStock(stock)}
+                          className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.03] transition-colors text-left border-b border-white/[0.03] last:border-0"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-gray-200 font-medium truncate">{stock.company_name}</p>
+                            <p className="text-[11px] text-gray-500 mt-0.5">
+                              {stock.nse_symbol ? `NSE: ${stock.nse_symbol}` : `BSE: ${stock.bse_scrip_code}`}
+                            </p>
+                          </div>
+                          <svg className="w-4 h-4 text-blue-400/60 flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Counter */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs text-gray-500">
+                    Selected: <span className={`font-semibold ${selectedStocks.length >= 4 ? 'text-green-400/80' : 'text-yellow-400/80'}`}>
+                      {selectedStocks.length}
+                    </span> / 15
+                  </span>
+                  {selectedStocks.length > 0 && selectedStocks.length < 4 && (
+                    <span className="text-[10px] text-yellow-500/70">
+                      Need {4 - selectedStocks.length} more
+                    </span>
+                  )}
+                </div>
+
+                {/* Selected Stocks */}
+                <div className="space-y-1 mb-4 max-h-48 overflow-y-auto">
+                  {selectedStocks.length === 0 ? (
+                    <div className="bg-[#0d1117] rounded-xl border border-white/[0.04] flex items-center justify-center py-8">
+                      <p className="text-xs text-gray-600 text-center">
+                        Reliance Industries Limited will be added automatically...
+                      </p>
+                    </div>
+                  ) : (
+                    selectedStocks.map((stock) => (
+                      <div
+                        key={stock.bse_scrip_code}
+                        className="flex items-center justify-between bg-[#0d1117] border border-white/[0.04] rounded-lg px-4 py-2.5 hover:border-white/[0.06] transition-colors"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-gray-200 font-medium truncate">{stock.company_name}</p>
+                          <p className="text-[10px] text-gray-600">
+                            {stock.nse_symbol ? `NSE: ${stock.nse_symbol}` : `BSE: ${stock.bse_scrip_code}`}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => removeStock(stock.bse_scrip_code)}
+                          className="p-1.5 rounded-md text-gray-700 hover:text-red-400 hover:bg-red-400/10 transition-colors flex-shrink-0 ml-2"
+                          title="Remove"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Toggle */}
+                <label className="flex items-start gap-3 mb-4 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={receiveAllUpdates}
+                    onChange={(e) => setReceiveAllUpdates(e.target.checked)}
+                    className="mt-1 w-4 h-4 rounded border-gray-600 bg-[#161b22] text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer accent-blue-600"
+                  />
+                  <div>
+                    <p className="text-sm text-gray-200 font-medium">Get updates from all companies</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                      Receive WhatsApp alerts for all companies, not just your selected stocks
+                    </p>
+                  </div>
+                </label>
+
+                {error && <p className="text-red-400/90 text-xs mb-3 text-center font-medium">{error}</p>}
+
+                {/* Buttons */}
+                <div className="space-y-2">
+                  <button
+                    onClick={handleSaveWatchlist}
+                    disabled={loading || selectedStocks.length < 4}
+                    className="w-full h-11 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/30 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 disabled:shadow-none"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Continue to RITO →'
+                    )}
+                  </button>
+                  <button
+                    onClick={handleSkipWatchlist}
+                    disabled={loading}
+                    className="w-full h-10 text-gray-400 hover:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Skip this for now
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
