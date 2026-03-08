@@ -464,33 +464,34 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                         <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mr-3" />
                       )}
                     </div>
+                    
+                    {/* Dropdown - positioned right below search input */}
+                    {watchlistResults.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#0d1117] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 z-30 max-h-60 overflow-y-auto">
+                        {watchlistResults.map((stock) => (
+                          <button
+                            key={stock.bse_scrip_code}
+                            onClick={() => addStock(stock)}
+                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.03] transition-colors text-left border-b border-white/[0.03] last:border-0"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm text-gray-200 font-medium truncate">{stock.company_name}</p>
+                              <p className="text-[11px] text-gray-500 mt-0.5">
+                                {stock.nse_symbol ? `NSE: ${stock.nse_symbol}` : `BSE: ${stock.bse_scrip_code}`}
+                              </p>
+                            </div>
+                            <svg className="w-4 h-4 text-blue-400/60 flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    
                     <p className="text-[10px] text-gray-500 mt-1.5 ml-1">
                       Search for companies above and tap to add them to your watchlist
                     </p>
                   </div>
-
-                  {/* Dropdown */}
-                  {watchlistResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#0d1117] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 z-20 max-h-60 overflow-y-auto">
-                      {watchlistResults.map((stock) => (
-                        <button
-                          key={stock.bse_scrip_code}
-                          onClick={() => addStock(stock)}
-                          className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.03] transition-colors text-left border-b border-white/[0.03] last:border-0"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm text-gray-200 font-medium truncate">{stock.company_name}</p>
-                            <p className="text-[11px] text-gray-500 mt-0.5">
-                              {stock.nse_symbol ? `NSE: ${stock.nse_symbol}` : `BSE: ${stock.bse_scrip_code}`}
-                            </p>
-                          </div>
-                          <svg className="w-4 h-4 text-blue-400/60 flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                          </svg>
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Counter */}
