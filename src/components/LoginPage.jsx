@@ -431,16 +431,15 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
             {/* ── Watchlist Step (new users only, skippable) ── */}
             {step === 'watchlist' && (
               <div>
-                <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">Build Your Watchlist</h2>
-                <p className="text-xs text-gray-500 mb-6 font-light">Select at least 4 companies to get personalized updates</p>
+                <h2 className="text-[17px] font-semibold text-gray-200 mb-6 tracking-tight">Build Your Watchlist</h2>
 
                 {/* Info box */}
-                <div className="bg-blue-500/[0.06] border border-blue-500/15 rounded-xl px-4 py-3 mb-4 flex items-start gap-2.5">
-                  <svg className="w-4 h-4 text-blue-400/70 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="bg-blue-500/[0.08] border border-blue-500/20 rounded-xl px-4 py-3.5 mb-4 flex items-start gap-3 shadow-lg shadow-blue-500/5">
+                  <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-xs text-blue-300/80 leading-relaxed">
-                    Select at least <span className="font-semibold text-blue-300">4 stocks</span>. Reliance Industries Limited is pre-selected for you.
+                  <p className="text-sm text-blue-200/90 leading-relaxed font-medium">
+                    Select at least <span className="font-bold text-blue-300">4 stocks</span> for us to send personalized updates to you. <span className="font-semibold text-blue-300">Reliance Industries Limited</span> is pre-selected for you.
                   </p>
                 </div>
 
