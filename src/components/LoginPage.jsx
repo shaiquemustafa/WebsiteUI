@@ -444,21 +444,29 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                 </div>
 
                 {/* Search */}
-                <div className="relative mb-4">
-                  <div className="flex items-center bg-[#161b22] rounded-xl border border-white/[0.06] focus-within:border-blue-500/40 focus-within:ring-1 focus-within:ring-blue-500/10 transition-all">
-                    <svg className="w-4 h-4 text-gray-600 ml-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input
-                      type="text"
-                      placeholder="Search by company name or NSE symbol..."
-                      value={watchlistQuery}
-                      onChange={(e) => handleWatchlistSearch(e.target.value)}
-                      className="flex-1 h-11 px-3 bg-transparent text-sm text-gray-100 placeholder-gray-600 outline-none"
-                    />
-                    {watchlistSearching && (
-                      <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mr-3" />
-                    )}
+                <div className="mb-4">
+                  <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Search & Add Stocks
+                  </label>
+                  <div className="relative">
+                    <div className="flex items-center bg-[#161b22] rounded-xl border-2 border-blue-500/30 focus-within:border-blue-500/60 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                      <svg className="w-4 h-4 text-blue-400 ml-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Type company name or NSE symbol to add..."
+                        value={watchlistQuery}
+                        onChange={(e) => handleWatchlistSearch(e.target.value)}
+                        className="flex-1 h-11 px-3 bg-transparent text-sm text-gray-100 placeholder-gray-500 outline-none"
+                      />
+                      {watchlistSearching && (
+                        <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mr-3" />
+                      )}
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-1.5 ml-1">
+                      Search for companies above and tap to add them to your watchlist
+                    </p>
                   </div>
 
                   {/* Dropdown */}
@@ -500,37 +508,50 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                 </div>
 
                 {/* Selected Stocks */}
-                <div className="space-y-1 mb-4 max-h-48 overflow-y-auto">
-                  {selectedStocks.length === 0 ? (
-                    <div className="bg-[#0d1117] rounded-xl border border-white/[0.04] flex items-center justify-center py-8">
-                      <p className="text-xs text-gray-600 text-center">
-                        Reliance Industries Limited will be added automatically...
-                      </p>
-                    </div>
-                  ) : (
-                    selectedStocks.map((stock) => (
-                      <div
-                        key={stock.bse_scrip_code}
-                        className="flex items-center justify-between bg-[#0d1117] border border-white/[0.04] rounded-lg px-4 py-2.5 hover:border-white/[0.06] transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-gray-200 font-medium truncate">{stock.company_name}</p>
-                          <p className="text-[10px] text-gray-600">
-                            {stock.nse_symbol ? `NSE: ${stock.nse_symbol}` : `BSE: ${stock.bse_scrip_code}`}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => removeStock(stock.bse_scrip_code)}
-                          className="p-1.5 rounded-md text-gray-700 hover:text-red-400 hover:bg-red-400/10 transition-colors flex-shrink-0 ml-2"
-                          title="Remove"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
+                <div className="space-y-2 mb-4">
+                  {/* Show selected stocks */}
+                  {selectedStocks.map((stock) => (
+                    <div
+                      key={stock.bse_scrip_code}
+                      className="flex items-center justify-between bg-[#0d1117] border border-white/[0.06] rounded-lg px-4 py-3 hover:border-blue-500/30 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-gray-200 font-medium truncate">{stock.company_name}</p>
+                        <p className="text-[10px] text-gray-600 mt-0.5">
+                          {stock.nse_symbol ? `NSE: ${stock.nse_symbol}` : `BSE: ${stock.bse_scrip_code}`}
+                        </p>
                       </div>
-                    ))
-                  )}
+                      <button
+                        onClick={() => removeStock(stock.bse_scrip_code)}
+                        className="p-1.5 rounded-md text-gray-700 hover:text-red-400 hover:bg-red-400/10 transition-colors flex-shrink-0 ml-2"
+                        title="Remove"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Show empty slots for remaining stocks needed */}
+                  {Array.from({ length: Math.max(0, 4 - selectedStocks.length) }).map((_, index) => (
+                    <div
+                      key={`empty-${index}`}
+                      className="flex items-center justify-center bg-[#0d1117] border-2 border-dashed border-gray-700/50 rounded-lg px-4 py-3 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all cursor-pointer"
+                      onClick={() => {
+                        // Focus search input when clicking empty slot
+                        const searchInput = document.querySelector('input[placeholder*="Type company name"]');
+                        searchInput?.focus();
+                      }}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span className="text-sm text-gray-500 font-medium">Add stock</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Toggle */}
