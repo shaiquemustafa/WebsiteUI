@@ -561,12 +561,12 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                     type="checkbox"
                     checked={receiveAllUpdates}
                     onChange={(e) => setReceiveAllUpdates(e.target.checked)}
-                    className="mt-1 w-4 h-4 rounded border-gray-600 bg-[#161b22] text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer accent-blue-600"
+                    className="mt-1 w-5 h-5 rounded border-gray-600 bg-[#161b22] text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer accent-blue-600"
                   />
-                  <div>
-                    <p className="text-sm text-gray-200 font-medium">Get updates from all companies</p>
-                    <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
-                      Receive WhatsApp alerts for all companies, not just your selected stocks
+                  <div className="flex-1">
+                    <p className="text-base text-gray-100 font-semibold mb-1">Get high-impact news from other stocks in the market</p>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Your selected stocks will give you regular updates. Enable this to also receive high-impact news from other companies in the market.
                     </p>
                   </div>
                 </label>
