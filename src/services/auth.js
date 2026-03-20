@@ -55,6 +55,25 @@ export async function sendOTP(phone) {
 }
 
 export async function trackMetaConversionEvent({ eventName, phone, eventId, eventSourceUrl }) {
+  const getCookie = (name) => {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  const fbp = getCookie('_fbp');
+  let fbc = getCookie('_fbc');
+  if (!fbc) {
+    const fbclid = new URLSearchParams(window.location.search).get('fbclid');
+    if (fbclid) {
+      // Meta recommended fallback format when _fbc cookie is missing.
+      fbc = `fb.1.${Date.now()}.${fbclid}`;
+    }
+  }
+  const storedUser = getStoredUser();
+  const externalId = storedUser?.id
+    ? `user_${storedUser.id}`
+    : (phone ? `phone_${String(phone).replace(/\D/g, '')}` : null);
+
   try {
     await fetch(`${API_BASE}/api/meta/conversions-event`, {
       method: 'POST',
@@ -65,6 +84,9 @@ export async function trackMetaConversionEvent({ eventName, phone, eventId, even
         event_id: eventId,
         event_source_url: eventSourceUrl || window.location.href,
         action_source: 'website',
+        external_id: externalId,
+        fbc,
+        fbp,
       }),
     });
   } catch {
