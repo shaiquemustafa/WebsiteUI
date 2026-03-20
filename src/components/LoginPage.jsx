@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { sendOTP, verifyOTP, updateUserName } from '../services/auth';
+import { sendOTP, verifyOTP, updateUserName, trackMetaConversionEvent } from '../services/auth';
 import { searchStocks, saveWatchlist } from '../services/api';
 import Footer from './Footer';
 
@@ -54,6 +54,12 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
     setLoading(true);
     try {
       await sendOTP(cleaned);
+      trackMetaConversionEvent({
+        eventName: 'OTP requested',
+        phone: cleaned,
+        eventId: `otp_requested_${cleaned}_${Date.now()}`,
+        eventSourceUrl: window.location.href,
+      });
       setStep('otp');
       setCountdown(60);
     } catch (err) {

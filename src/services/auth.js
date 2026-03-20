@@ -54,6 +54,24 @@ export async function sendOTP(phone) {
   return data;
 }
 
+export async function trackMetaConversionEvent({ eventName, phone, eventId, eventSourceUrl }) {
+  try {
+    await fetch(`${API_BASE}/api/meta/conversions-event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_name: eventName,
+        phone,
+        event_id: eventId,
+        event_source_url: eventSourceUrl || window.location.href,
+        action_source: 'website',
+      }),
+    });
+  } catch {
+    // Silent fail — should never block user actions
+  }
+}
+
 export async function verifyOTP(phone, otp) {
   const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
     method: 'POST',
