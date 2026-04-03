@@ -241,11 +241,11 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
         receiveAllUpdates
       );
       const cleanedPhone = phone.replace(/\s|-/g, '');
-      // Meta Conversions API (same endpoint as OTP) — create a custom conversion for this event name in Events Manager
+      // Meta CAPI — onboarding only (Continue to RITO). Map custom conversion to event name "Watchlist Event" in Events Manager
       trackMetaConversionEvent({
-        eventName: 'Watchlist Onboarding Complete',
+        eventName: 'Watchlist Event',
         phone: cleanedPhone,
-        eventId: `watchlist_onboarding_${cleanedPhone}_${Date.now()}`,
+        eventId: `watchlist_event_${cleanedPhone}_${Date.now()}`,
         eventSourceUrl: window.location.href,
       });
       // Proceed to dashboard
