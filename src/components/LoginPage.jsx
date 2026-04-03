@@ -240,6 +240,14 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
         selectedStocks.map((s) => s.bse_scrip_code),
         receiveAllUpdates
       );
+      const cleanedPhone = phone.replace(/\s|-/g, '');
+      // Meta Conversions API (same endpoint as OTP) — create a custom conversion for this event name in Events Manager
+      trackMetaConversionEvent({
+        eventName: 'Watchlist Onboarding Complete',
+        phone: cleanedPhone,
+        eventId: `watchlist_onboarding_${cleanedPhone}_${Date.now()}`,
+        eventSourceUrl: window.location.href,
+      });
       // Proceed to dashboard
       const updatedResult = {
         ...verifyResult,
