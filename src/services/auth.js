@@ -54,6 +54,8 @@ export async function sendOTP(phone) {
   return data;
 }
 
+const FBCLID_STORAGE_KEY = 'rito_fbclid';
+
 export async function trackMetaConversionEvent({ eventName, phone, eventId, eventSourceUrl }) {
   const getCookie = (name) => {
     const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -63,9 +65,16 @@ export async function trackMetaConversionEvent({ eventName, phone, eventId, even
   const fbp = getCookie('_fbp');
   let fbc = getCookie('_fbc');
   if (!fbc) {
-    const fbclid = new URLSearchParams(window.location.search).get('fbclid');
+    const fbclid = new URLSearchParams(window.location.search).get('fbclid')
+      || (() => {
+        try {
+          return localStorage.getItem(FBCLID_STORAGE_KEY);
+        } catch {
+          return null;
+        }
+      })();
     if (fbclid) {
-      // Meta recommended fallback format when _fbc cookie is missing.
+      // Meta format when _fbc cookie missing; fbclid from URL or saved from first landing
       fbc = `fb.1.${Date.now()}.${fbclid}`;
     }
   }
@@ -74,20 +83,22 @@ export async function trackMetaConversionEvent({ eventName, phone, eventId, even
     ? `user_${storedUser.id}`
     : (phone ? `phone_${String(phone).replace(/\D/g, '')}` : null);
 
+  const body = {
+    event_name: eventName,
+    phone,
+    event_id: eventId,
+    event_source_url: eventSourceUrl || window.location.href,
+    action_source: 'website',
+    external_id: externalId,
+  };
+  if (fbc) body.fbc = fbc;
+  if (fbp) body.fbp = fbp;
+
   try {
     await fetch(`${API_BASE}/api/meta/conversions-event`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event_name: eventName,
-        phone,
-        event_id: eventId,
-        event_source_url: eventSourceUrl || window.location.href,
-        action_source: 'website',
-        external_id: externalId,
-        fbc,
-        fbp,
-      }),
+      body: JSON.stringify(body),
     });
   } catch {
     // Silent fail — should never block user actions
