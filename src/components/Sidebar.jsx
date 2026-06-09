@@ -1,6 +1,6 @@
 import { getImpactTextClass, getCategoryTextClass } from '../utils/format';
 
-export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, onEditWatchlist, isWatchlistActive }) {
+export default function Sidebar({ data, activeIndex, onSelect, user, subscription, onLogout, onEditWatchlist, isWatchlistActive, onManageSubscription }) {
   return (
     <aside className="w-[400px] border-r border-white/[0.04] overflow-y-auto bg-[#06080a] flex-shrink-0 flex flex-col">
       {/* Header */}
@@ -104,10 +104,25 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
                 <p className="text-xs text-gray-500 truncate">
                   +91 {user.phone?.slice(-10)}
                 </p>
+                {subscription?.is_paid && subscription.current_period_end && (
+                  <p className="text-[10px] text-emerald-500/80 truncate">
+                    Active until {new Date(subscription.current_period_end).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  </p>
+                )}
               </div>
             </div>
-            <button
-              onClick={onLogout}
+            <div className="flex flex-col gap-1.5 flex-shrink-0">
+              {onManageSubscription && (
+                <button
+                  type="button"
+                  onClick={onManageSubscription}
+                  className="text-[10px] font-medium text-blue-400/90 hover:text-blue-400 transition"
+                >
+                  Subscription
+                </button>
+              )}
+              <button
+                onClick={onLogout}
               className="flex items-center gap-1.5 text-xs font-medium text-red-400/80 bg-red-400/10 hover:bg-red-400/20 hover:text-red-400 border border-red-400/20 px-3 py-1.5 rounded-lg transition-all"
               title="Logout"
             >
@@ -116,6 +131,7 @@ export default function Sidebar({ data, activeIndex, onSelect, user, onLogout, o
               </svg>
               Logout
             </button>
+            </div>
           </div>
         </div>
       )}

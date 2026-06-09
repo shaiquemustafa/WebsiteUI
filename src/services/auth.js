@@ -3,6 +3,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
 const TOKEN_KEY = 'rito_auth_token';
 const USER_KEY = 'rito_user';
+const SUBSCRIPTION_KEY = 'rito_subscription';
 
 // ── Token helpers ───────────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ export function setToken(token) {
 export function removeToken() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(SUBSCRIPTION_KEY);
 }
 
 export function getStoredUser() {
@@ -30,6 +32,23 @@ export function getStoredUser() {
 
 export function setStoredUser(user) {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+export function setStoredSubscription(subscription) {
+  if (subscription) {
+    localStorage.setItem(SUBSCRIPTION_KEY, JSON.stringify(subscription));
+  } else {
+    localStorage.removeItem(SUBSCRIPTION_KEY);
+  }
+}
+
+export function getStoredSubscription() {
+  try {
+    const raw = localStorage.getItem(SUBSCRIPTION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function isLoggedIn() {
@@ -118,9 +137,9 @@ export async function verifyOTP(phone, otp) {
     throw new Error(data.detail || 'Failed to verify OTP');
   }
 
-  // Store token and user
   setToken(data.token);
   setStoredUser(data.user);
+  if (data.subscription) setStoredSubscription(data.subscription);
 
   return data;
 }
@@ -136,14 +155,14 @@ export async function fetchCurrentUser() {
   });
 
   if (!res.ok) {
-    // Token expired or invalid — clean up
     removeToken();
     return null;
   }
 
   const data = await res.json();
   setStoredUser(data.user);
-  return data.user;
+  if (data.subscription) setStoredSubscription(data.subscription);
+  return { user: data.user, subscription: data.subscription };
 }
 
 export async function updateUserName(name) {

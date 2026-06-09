@@ -1,0 +1,125 @@
+import { getToken } from './auth';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
+
+export function getSubscribeUrl() {
+  const base = import.meta.env.VITE_APP_BASE_URL || window.location.origin;
+  return `${base.replace(/\/$/, '')}/#subscribe`;
+}
+
+export async function fetchPaymentConfig() {
+  const res = await fetch(`${API_BASE}/api/payment/config`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Payment is unavailable right now.');
+  }
+  return res.json();
+}
+
+export async function fetchSubscription() {
+  const token = getToken();
+  if (!token) return null;
+
+  const res = await fetch(`${API_BASE}/api/subscription/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) return null;
+  return res.json();
+}
+
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
+export async function startSubscriptionPayment({ user, onSuccess, onError }) {
+  const token = getToken();
+  if (!token) {
+    onError?.('Please log in to continue.');
+    return;
+  }
+
+  const loaded = await loadRazorpayScript();
+  if (!loaded) {
+    onError?.('Could not load payment gateway. Please try again.');
+    return;
+  }
+
+  let config;
+  try {
+    config = await fetchPaymentConfig();
+  } catch (err) {
+    onError?.(err.message);
+    return;
+  }
+
+  let order;
+  try {
+    const res = await fetch(`${API_BASE}/api/payment/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to start payment.');
+    order = data;
+  } catch (err) {
+    onError?.(err.message || 'Failed to start payment.');
+    return;
+  }
+
+  const displayPhone = user?.phone ? String(user.phone).replace(/^91/, '') : '';
+
+  const options = {
+    key: order.key_id || config.key_id,
+    amount: order.amount,
+    currency: order.currency || 'INR',
+    name: 'RITO',
+    description: `Monthly access — ₹${config.amount_inr}`,
+    order_id: order.order_id,
+    prefill: {
+      name: user?.name || '',
+      contact: displayPhone,
+    },
+    theme: { color: '#2563eb' },
+    handler: async (response) => {
+      try {
+        const res = await fetch(`${API_BASE}/api/payment/verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            order_id: response.razorpay_order_id,
+            payment_id: response.razorpay_payment_id,
+            signature: response.razorpay_signature,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Payment verification failed.');
+        onSuccess?.(data.subscription);
+      } catch (err) {
+        onError?.(err.message || 'Payment verification failed.');
+      }
+    },
+    modal: {
+      ondismiss: () => onError?.('Payment cancelled.'),
+    },
+  };
+
+  const rzp = new window.Razorpay(options);
+  rzp.open();
+}

@@ -3,9 +3,17 @@ import { getToken } from './auth';
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
 
 export async function fetchUIData(apiBase) {
-  const response = await fetch(`${apiBase || API_BASE}/ui-data/today`, {
-    headers: { Accept: 'application/json' },
-  });
+  const token = getToken();
+  const headers = { Accept: 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${apiBase || API_BASE}/ui-data/today`, { headers });
+
+  if (response.status === 402) {
+    const err = new Error('Subscription required');
+    err.code = 'SUBSCRIPTION_REQUIRED';
+    throw err;
+  }
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({ detail: response.statusText }));
