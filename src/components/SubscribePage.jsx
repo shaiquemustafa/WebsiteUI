@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { startSubscriptionPayment, getSubscribeUrl } from '../services/payment';
+import { startSubscriptionPayment, getBillingUrl } from '../services/payment';
 import Footer from './Footer';
 
 function formatExpiry(iso) {
@@ -31,7 +31,7 @@ export default function SubscribePage({
 
   const isPaid = subscription?.is_paid;
   const amount = subscription?.amount_inr ?? 19;
-  const subscribeUrl = getSubscribeUrl();
+  const billingUrl = getBillingUrl();
 
   const handlePay = async () => {
     setError('');
@@ -130,7 +130,7 @@ export default function SubscribePage({
           </div>
 
           <p className="text-xs text-gray-600 text-center mt-6 break-all">
-            Share this link: <span className="text-gray-500">{subscribeUrl}</span>
+            Share this link: <span className="text-gray-500">{billingUrl}</span>
           </p>
 
           <div className="flex justify-center gap-4 mt-6">

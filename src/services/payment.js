@@ -2,9 +2,14 @@ import { getToken } from './auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
 
-export function getSubscribeUrl() {
+export function getBillingUrl() {
   const base = import.meta.env.VITE_APP_BASE_URL || window.location.origin;
-  return `${base.replace(/\/$/, '')}/#subscribe`;
+  return `${base.replace(/\/$/, '')}/#billing`;
+}
+
+/** @deprecated Use getBillingUrl */
+export function getSubscribeUrl() {
+  return getBillingUrl();
 }
 
 export async function fetchPaymentConfig() {

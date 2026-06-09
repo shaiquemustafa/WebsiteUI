@@ -118,7 +118,7 @@ export default function Sidebar({ data, activeIndex, onSelect, user, subscriptio
                   onClick={onManageSubscription}
                   className="text-[10px] font-medium text-blue-400/90 hover:text-blue-400 transition"
                 >
-                  Subscription
+                  Billing
                 </button>
               )}
               <button

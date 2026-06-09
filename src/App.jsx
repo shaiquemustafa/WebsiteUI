@@ -23,7 +23,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.co
 
 function parseHashView() {
   const hash = window.location.hash.replace('#', '').trim();
-  if (hash === 'subscribe') return 'subscribe';
+  if (hash === 'billing' || hash === 'subscribe') return 'billing';
   if (hash === 'watchlist') return 'watchlist';
   return 'news';
 }
@@ -96,7 +96,7 @@ function App() {
 
   const isPaid = subscription?.is_paid;
   const showSubscribePage =
-    user && (view === 'subscribe' || !isPaid);
+    user && (view === 'billing' || !isPaid);
 
   useEffect(() => {
     if (!user || !isPaid) return;
@@ -244,9 +244,9 @@ function App() {
     );
   }
 
-  const goSubscribe = () => {
-    window.location.hash = 'subscribe';
-    setView('subscribe');
+  const goBilling = () => {
+    window.location.hash = 'billing';
+    setView('billing');
   };
 
   const mainContent = view === 'watchlist' ? (
@@ -278,7 +278,7 @@ function App() {
             onLogout={logout}
             onEditWatchlist={() => setView(view === 'watchlist' ? 'news' : 'watchlist')}
             isWatchlistActive={view === 'watchlist'}
-            onManageSubscription={goSubscribe}
+            onManageSubscription={goBilling}
           />
           <main className="flex-1 p-8 overflow-y-auto">
             {mainContent}
@@ -299,10 +299,10 @@ function App() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={goSubscribe}
+                  onClick={goBilling}
                   className="text-xs font-medium text-blue-400/90 bg-blue-400/10 hover:bg-blue-400/20 px-2.5 py-1.5 rounded-lg transition"
                 >
-                  Subscription
+                  Billing
                 </button>
                 <button
                   onClick={logout}
