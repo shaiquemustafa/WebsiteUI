@@ -47,7 +47,7 @@ function loadRazorpayScript() {
   });
 }
 
-export async function startSubscriptionPayment({ user, onSuccess, onError }) {
+export async function startSubscriptionPayment({ user, onSuccess, onError, onConfirming }) {
   const token = getToken();
   if (!token) {
     onError?.('Please log in to continue.');
@@ -87,6 +87,43 @@ export async function startSubscriptionPayment({ user, onSuccess, onError }) {
 
   const displayPhone = user?.phone ? String(user.phone).replace(/^91/, '') : '';
 
+  let settled = false;
+
+  const cleanup = () => {
+    document.removeEventListener('visibilitychange', onVisible);
+  };
+
+  const finishSuccess = (subscription) => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    onSuccess?.(subscription);
+  };
+
+  const finishError = (msg) => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    onError?.(msg);
+  };
+
+  const tryPollPaid = async () => {
+    const sub = await fetchSubscription();
+    if (sub?.is_paid) {
+      finishSuccess(sub);
+      return true;
+    }
+    return false;
+  };
+
+  const onVisible = () => {
+    if (document.visibilityState === 'visible' && !settled) {
+      tryPollPaid();
+    }
+  };
+
+  document.addEventListener('visibilitychange', onVisible);
+
   const options = {
     key: order.key_id || config.key_id,
     amount: order.amount,
@@ -114,17 +151,26 @@ export async function startSubscriptionPayment({ user, onSuccess, onError }) {
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Payment verification failed.');
-        onSuccess?.(data.subscription);
+        if (!res.ok) {
+          if (await tryPollPaid()) return;
+          throw new Error(data.detail || 'Payment verification failed.');
+        }
+        finishSuccess(data.subscription);
       } catch (err) {
-        onError?.(err.message || 'Payment verification failed.');
+        if (await tryPollPaid()) return;
+        finishError(err.message || 'Payment verification failed.');
       }
     },
     modal: {
-      ondismiss: () => onError?.('Payment cancelled.'),
+      ondismiss: async () => {
+        if (settled) return;
+        if (await tryPollPaid()) return;
+        finishError('Payment cancelled.');
+      },
     },
   };
 
+  onConfirming?.();
   const rzp = new window.Razorpay(options);
   rzp.open();
 }

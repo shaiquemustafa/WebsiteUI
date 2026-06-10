@@ -26,12 +26,14 @@ export default function SubscribePage({
   forcePaywall = false,
 }) {
   const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const isPaid = subscription?.is_paid;
   const amount = subscription?.amount_inr ?? 19;
   const billingUrl = getBillingUrl();
+  const checkoutActive = loading || confirming;
 
   const handlePay = async () => {
     setError('');
@@ -39,17 +41,21 @@ export default function SubscribePage({
     setLoading(true);
     await startSubscriptionPayment({
       user,
-      onSuccess: (updated) => {
+      onConfirming: () => {
         setLoading(false);
+        setConfirming(true);
+      },
+      onSuccess: (updated) => {
+        setConfirming(false);
         setSuccess('Payment successful! Your access is now active.');
         onSubscriptionUpdated?.(updated);
       },
       onError: (msg) => {
         setLoading(false);
+        setConfirming(false);
         if (msg && msg !== 'Payment cancelled.') setError(msg);
       },
     });
-    setLoading(false);
   };
 
   return (
@@ -92,6 +98,20 @@ export default function SubscribePage({
                   {loading ? 'Opening checkout…' : 'Renew early'}
                 </button>
               </>
+            ) : checkoutActive ? (
+              <>
+                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-100 text-center mb-2">
+                  {loading ? 'Opening checkout…' : 'Confirming payment…'}
+                </h2>
+                <p className="text-gray-400 text-sm text-center mb-6 leading-relaxed">
+                  {confirming
+                    ? 'Complete payment in your UPI app, then return here. We will activate your access automatically.'
+                    : 'Please wait while we connect to Razorpay.'}
+                </p>
+              </>
             ) : (
               <>
                 <h2 className="text-xl font-semibold text-gray-100 text-center mb-2">
@@ -116,7 +136,7 @@ export default function SubscribePage({
                 <button
                   type="button"
                   onClick={handlePay}
-                  disabled={loading}
+                  disabled={checkoutActive}
                   className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition shadow-lg shadow-blue-600/20 disabled:opacity-50"
                 >
                   {loading ? 'Opening checkout…' : `Pay ₹${amount} now`}
