@@ -31,7 +31,7 @@ export default function SubscribePage({
   const [success, setSuccess] = useState('');
 
   const isPaid = subscription?.is_paid;
-  const amount = subscription?.amount_inr ?? 199;
+  const amount = subscription?.amount_inr ?? 99;
   const billingUrl = getBillingUrl();
   const checkoutActive = loading || confirming;
 

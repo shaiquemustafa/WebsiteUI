@@ -51,6 +51,13 @@ export function getStoredSubscription() {
   }
 }
 
+/** Dashboard / comms access (paid or odd grace day). */
+export function subscriptionHasAccess(subscription) {
+  if (!subscription) return false;
+  if (subscription.has_access != null) return Boolean(subscription.has_access);
+  return Boolean(subscription.is_paid);
+}
+
 export function isLoggedIn() {
   return !!getToken();
 }

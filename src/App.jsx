@@ -17,6 +17,7 @@ import {
   setStoredSubscription,
   logout,
   recordVisit,
+  subscriptionHasAccess,
 } from './services/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
@@ -94,12 +95,13 @@ function App() {
     setView(page);
   };
 
+  const hasAccess = subscriptionHasAccess(subscription);
   const isPaid = subscription?.is_paid;
   const showSubscribePage =
-    user && (view === 'billing' || !isPaid);
+    user && (view === 'billing' || !hasAccess);
 
   useEffect(() => {
-    if (!user || !isPaid) return;
+    if (!user || !hasAccess) return;
     const load = async () => {
       try {
         setLoading(true);
@@ -108,7 +110,7 @@ function App() {
         setError(null);
       } catch (err) {
         if (err.code === 'SUBSCRIPTION_REQUIRED') {
-          setSubscription((s) => (s ? { ...s, is_paid: false } : s));
+          setSubscription((s) => (s ? { ...s, is_paid: false, has_access: false } : s));
         } else {
           setError(err.message);
         }
@@ -119,7 +121,7 @@ function App() {
     load();
     const interval = setInterval(load, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [user, isPaid]);
+  }, [user, hasAccess]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -175,7 +177,7 @@ function App() {
         onSubscriptionUpdated={handleSubscriptionUpdated}
         onLogout={logout}
         onNavigate={handleNavigate}
-        forcePaywall={!isPaid}
+        forcePaywall={!hasAccess}
       />
     );
   }
