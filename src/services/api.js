@@ -1,6 +1,6 @@
 import { getToken } from './auth';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe-9s1j.onrender.com';
 
 export async function fetchUIData(apiBase) {
   const token = getToken();

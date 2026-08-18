@@ -1,6 +1,6 @@
 // services/auth.js – Auth API calls & token management
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe-9s1j.onrender.com';
 const TOKEN_KEY = 'rito_auth_token';
 const USER_KEY = 'rito_user';
 const SUBSCRIPTION_KEY = 'rito_subscription';

@@ -28,7 +28,7 @@ import {
   isPersonalModeEnv,
 } from './services/auth';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe-9s1j.onrender.com';
 
 function parseHashView() {
   const hash = window.location.hash.replace('#', '').trim();
