@@ -1,14 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import DetailPanel from './components/DetailPanel';
-import MobileList from './components/MobileList';
+import BriefingStockDetailPanel from './components/BriefingStockDetailPanel';
+import IndustryInsightDetailPanel from './components/IndustryInsightDetailPanel';
+import FeedList from './components/FeedList';
 import LoginPage from './components/LoginPage';
 import StockSelectionPage from './components/StockSelectionPage';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsPage from './components/TermsPage';
 import SubscribePage from './components/SubscribePage';
 import Footer from './components/Footer';
-import { fetchUIData } from './services/api';
+import {
+  fetchUIData,
+  fetchGeneralStockNews,
+  fetchIndustryInsights,
+  fetchPublicConfig,
+} from './services/api';
 import {
   isLoggedIn,
   fetchCurrentUser,
@@ -18,6 +25,7 @@ import {
   logout,
   recordVisit,
   subscriptionHasAccess,
+  isPersonalModeEnv,
 } from './services/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
@@ -26,24 +34,45 @@ function parseHashView() {
   const hash = window.location.hash.replace('#', '').trim();
   if (hash === 'billing' || hash === 'subscribe') return 'billing';
   if (hash === 'watchlist') return 'watchlist';
-  return 'news';
+  if (hash === 'general') return 'general';
+  if (hash === 'industry') return 'industry';
+  if (hash === 'privacy') return 'privacy';
+  if (hash === 'terms') return 'terms';
+  return 'bse';
 }
 
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState(null);
   const [subscription, setSubscription] = useState(null);
-  const [view, setView] = useState(parseHashView);
+  const [personalMode, setPersonalMode] = useState(isPersonalModeEnv());
+  const [feedSection, setFeedSection] = useState(parseHashView);
 
-  const [data, setData] = useState([]);
+  const [bseData, setBseData] = useState([]);
+  const [generalData, setGeneralData] = useState([]);
+  const [industryData, setIndustryData] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showDetail, setShowDetail] = useState(false);
 
+  const activeData = useMemo(() => {
+    if (feedSection === 'general') return generalData;
+    if (feedSection === 'industry') return industryData;
+    return bseData;
+  }, [feedSection, bseData, generalData, industryData]);
+
   useEffect(() => {
-    const onHashChange = () => setView(parseHashView());
+    fetchPublicConfig(API_BASE)
+      .then((cfg) => {
+        if (cfg?.personal_mode) setPersonalMode(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const onHashChange = () => setFeedSection(parseHashView());
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
@@ -63,6 +92,7 @@ function App() {
         if (result?.user) {
           setUser(result.user);
           setSubscription(result.subscription || null);
+          if (result.subscription?.personal_mode) setPersonalMode(true);
           recordVisit();
         } else {
           setUser(null);
@@ -81,6 +111,7 @@ function App() {
     setUser(result.user);
     if (result.subscription) {
       setSubscription(result.subscription);
+      if (result.subscription.personal_mode) setPersonalMode(true);
     }
   };
 
@@ -88,40 +119,54 @@ function App() {
     setSubscription(updated);
     setStoredSubscription(updated);
     window.location.hash = '';
-    setView('news');
+    setFeedSection('bse');
   }, []);
 
   const handleNavigate = (page) => {
-    setView(page);
+    if (page === 'privacy' || page === 'terms') {
+      setFeedSection(page);
+      window.location.hash = page;
+      return;
+    }
+    setFeedSection(page === 'news' ? 'bse' : page);
   };
 
   const hasAccess = subscriptionHasAccess(subscription);
-  const isPaid = subscription?.is_paid;
   const showSubscribePage =
-    user && (view === 'billing' || !hasAccess);
+    !personalMode && user && (feedSection === 'billing' || !hasAccess);
+
+  const loadFeeds = useCallback(async () => {
+    if (!user || !hasAccess) return;
+    try {
+      setLoading(true);
+      const loaders = [fetchUIData(API_BASE).then(setBseData)];
+      if (personalMode) {
+        loaders.push(fetchGeneralStockNews(API_BASE).then(setGeneralData));
+        loaders.push(fetchIndustryInsights(API_BASE).then(setIndustryData));
+      }
+      await Promise.all(loaders);
+      setError(null);
+    } catch (err) {
+      if (err.code === 'SUBSCRIPTION_REQUIRED') {
+        setSubscription((s) => (s ? { ...s, is_paid: false, has_access: false } : s));
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [user, hasAccess, personalMode]);
 
   useEffect(() => {
-    if (!user || !hasAccess) return;
-    const load = async () => {
-      try {
-        setLoading(true);
-        const result = await fetchUIData(API_BASE);
-        setData(result);
-        setError(null);
-      } catch (err) {
-        if (err.code === 'SUBSCRIPTION_REQUIRED') {
-          setSubscription((s) => (s ? { ...s, is_paid: false, has_access: false } : s));
-        } else {
-          setError(err.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-    const interval = setInterval(load, 2 * 60 * 1000);
+    loadFeeds();
+    const interval = setInterval(loadFeeds, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [user, hasAccess]);
+  }, [loadFeeds]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+    setShowDetail(false);
+  }, [feedSection]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -133,11 +178,28 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const handleFeedSectionChange = (section) => {
+    setFeedSection(section);
+    window.location.hash = section === 'bse' ? '' : section;
+  };
+
   const handleSelect = (index) => {
     setSelectedIndex(index);
-    setView('news');
-    window.location.hash = '';
+    if (feedSection !== 'watchlist') {
+      window.location.hash = feedSection === 'bse' ? '' : feedSection;
+    }
     if (isMobile) setShowDetail(true);
+  };
+
+  const renderDetail = () => {
+    const item = activeData[selectedIndex];
+    if (feedSection === 'general') {
+      return <BriefingStockDetailPanel item={item} />;
+    }
+    if (feedSection === 'industry') {
+      return <IndustryInsightDetailPanel item={item} />;
+    }
+    return <DetailPanel item={item} />;
   };
 
   if (!authChecked) {
@@ -152,24 +214,24 @@ function App() {
   }
 
   if (!user) {
-    if (view === 'privacy') {
+    if (feedSection === 'privacy') {
       return (
         <div className="min-h-screen bg-[#06080a]">
-          <PrivacyPolicyPage onBack={() => setView(parseHashView())} />
+          <PrivacyPolicyPage onBack={() => setFeedSection(parseHashView())} />
         </div>
       );
     }
-    if (view === 'terms') {
+    if (feedSection === 'terms') {
       return (
         <div className="min-h-screen bg-[#06080a]">
-          <TermsPage onBack={() => setView(parseHashView())} />
+          <TermsPage onBack={() => setFeedSection(parseHashView())} />
         </div>
       );
     }
     return <LoginPage onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
   }
 
-  if (showSubscribePage && view !== 'privacy' && view !== 'terms') {
+  if (showSubscribePage && feedSection !== 'privacy' && feedSection !== 'terms') {
     return (
       <SubscribePage
         user={user}
@@ -182,17 +244,50 @@ function App() {
     );
   }
 
-  if (view === 'privacy') {
+  if (feedSection === 'privacy') {
     return (
       <div className="min-h-screen bg-[#06080a]">
-        <PrivacyPolicyPage onBack={() => setView('news')} />
+        <PrivacyPolicyPage onBack={() => setFeedSection('bse')} />
       </div>
     );
   }
-  if (view === 'terms') {
+  if (feedSection === 'terms') {
     return (
       <div className="min-h-screen bg-[#06080a]">
-        <TermsPage onBack={() => setView('news')} />
+        <TermsPage onBack={() => setFeedSection('bse')} />
+      </div>
+    );
+  }
+
+  if (feedSection === 'watchlist') {
+    return (
+      <div className="flex h-screen bg-[#06080a] overflow-hidden">
+        {!isMobile && (
+          <>
+            <Sidebar
+              data={activeData}
+              activeIndex={selectedIndex}
+              onSelect={handleSelect}
+              user={user}
+              subscription={subscription}
+              onLogout={logout}
+              onEditWatchlist={() => handleFeedSectionChange('bse')}
+              feedSection={feedSection}
+              onFeedSectionChange={handleFeedSectionChange}
+              personalMode={personalMode}
+            />
+            <main className="flex-1 p-8 overflow-y-auto">
+              <StockSelectionPage />
+              <Footer onNavigate={handleNavigate} />
+            </main>
+          </>
+        )}
+        {isMobile && (
+          <main className="flex-1 overflow-y-auto p-4">
+            <StockSelectionPage />
+            <Footer onNavigate={handleNavigate} />
+          </main>
+        )}
       </div>
     );
   }
@@ -212,16 +307,11 @@ function App() {
     return (
       <div className="flex items-center justify-center h-screen bg-[#06080a]">
         <div className="text-center max-w-md px-6">
-          <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-semibold text-gray-200 mb-1.5 tracking-tight">No Data Available</h2>
+          <h2 className="text-lg font-semibold text-gray-200 mb-1.5 tracking-tight">Could not load feed</h2>
           <p className="text-gray-500 text-sm mb-5">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20"
+            className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-all"
           >
             Retry
           </button>
@@ -230,39 +320,55 @@ function App() {
     );
   }
 
-  if (!data.length) {
+  if (!activeData.length) {
+    const emptyLabels = {
+      bse: 'No BSE/NSE updates yet',
+      general: 'No general stock news yet',
+      industry: 'No industry insights yet',
+    };
     return (
-      <div className="flex items-center justify-center h-screen bg-[#06080a]">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-semibold text-gray-200 mb-1.5 tracking-tight">No Updates Yet</h2>
-          <p className="text-gray-500 text-sm">Waiting for market announcements to be analyzed...</p>
-        </div>
+      <div className="flex h-screen bg-[#06080a] overflow-hidden">
+        {!isMobile && (
+          <>
+            <Sidebar
+              data={[]}
+              activeIndex={0}
+              onSelect={() => {}}
+              user={user}
+              subscription={subscription}
+              onLogout={logout}
+              onEditWatchlist={() => handleFeedSectionChange('watchlist')}
+              feedSection={feedSection}
+              onFeedSectionChange={handleFeedSectionChange}
+              personalMode={personalMode}
+            />
+            <main className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-lg font-semibold text-gray-200 mb-1.5">{emptyLabels[feedSection] || 'No data'}</h2>
+                <p className="text-gray-500 text-sm">Check another tab or wait for the next pipeline run.</p>
+              </div>
+            </main>
+          </>
+        )}
+        {isMobile && (
+          <main className="flex-1 overflow-y-auto">
+            <div className="sticky top-0 bg-[#06080a]/95 backdrop-blur-md z-10 px-4 border-b border-white/[0.04] pt-4 pb-0">
+              <p className="text-gray-500 text-sm pb-4">{emptyLabels[feedSection]}</p>
+            </div>
+          </main>
+        )}
       </div>
     );
   }
 
   const goBilling = () => {
     window.location.hash = 'billing';
-    setView('billing');
+    setFeedSection('billing');
   };
 
-  const mainContent = view === 'watchlist' ? (
+  const mainContent = (
     <div className="flex flex-col min-h-full">
-      <div className="flex-1">
-        <StockSelectionPage />
-      </div>
-      <Footer onNavigate={handleNavigate} />
-    </div>
-  ) : (
-    <div className="flex flex-col min-h-full">
-      <div className="flex-1">
-        <DetailPanel item={data[selectedIndex]} />
-      </div>
+      <div className="flex-1">{renderDetail()}</div>
       <Footer onNavigate={handleNavigate} />
     </div>
   );
@@ -272,19 +378,19 @@ function App() {
       {!isMobile && (
         <>
           <Sidebar
-            data={data}
+            data={activeData}
             activeIndex={selectedIndex}
             onSelect={handleSelect}
             user={user}
             subscription={subscription}
             onLogout={logout}
-            onEditWatchlist={() => setView(view === 'watchlist' ? 'news' : 'watchlist')}
-            isWatchlistActive={view === 'watchlist'}
-            onManageSubscription={goBilling}
+            onEditWatchlist={() => handleFeedSectionChange('watchlist')}
+            feedSection={feedSection}
+            onFeedSectionChange={handleFeedSectionChange}
+            personalMode={personalMode}
+            onManageSubscription={personalMode ? undefined : goBilling}
           />
-          <main className="flex-1 p-8 overflow-y-auto">
-            {mainContent}
-          </main>
+          <main className="flex-1 p-8 overflow-y-auto">{mainContent}</main>
         </>
       )}
 
@@ -298,64 +404,76 @@ function App() {
                 </div>
                 <h1 className="text-lg font-bold text-gray-100 tracking-tight">RITO</h1>
               </div>
-              <div className="flex items-center gap-2">
+              <button
+                onClick={logout}
+                className="text-xs font-medium text-red-400/80 bg-red-400/10 px-3 py-1.5 rounded-lg"
+              >
+                Logout
+              </button>
+            </div>
+            <div className="flex items-center gap-4 overflow-x-auto pb-0">
+              {(personalMode
+                ? [
+                    { id: 'bse', label: 'BSE/NSE' },
+                    { id: 'general', label: 'General' },
+                    { id: 'industry', label: 'Industry' },
+                    { id: 'watchlist', label: 'Watchlist' },
+                  ]
+                : [
+                    { id: 'bse', label: 'Live Updates' },
+                    { id: 'watchlist', label: 'Watchlist' },
+                  ]
+              ).map((tab) => (
                 <button
+                  key={tab.id}
                   type="button"
-                  onClick={goBilling}
-                  className="text-xs font-medium text-blue-400/90 bg-blue-400/10 hover:bg-blue-400/20 px-2.5 py-1.5 rounded-lg transition"
+                  onClick={() => {
+                    if (tab.id === 'watchlist') handleFeedSectionChange('watchlist');
+                    else handleFeedSectionChange(tab.id);
+                  }}
+                  className={`pb-3.5 text-sm font-semibold transition border-b-2 whitespace-nowrap ${
+                    feedSection === tab.id
+                      ? 'text-gray-100 border-blue-500'
+                      : 'text-gray-500 border-transparent'
+                  }`}
                 >
-                  Billing
+                  {tab.label}
                 </button>
-                <button
-                  onClick={logout}
-                  className="flex items-center gap-1.5 text-xs font-medium text-red-400/80 bg-red-400/10 hover:bg-red-400/20 hover:text-red-400 border border-red-400/20 px-3 py-1.5 rounded-lg transition-all"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center gap-7">
-              <button
-                onClick={() => { setView('news'); window.location.hash = ''; }}
-                className={`pb-3.5 text-sm font-semibold transition border-b-2 ${
-                  view === 'news'
-                    ? 'text-gray-100 border-blue-500'
-                    : 'text-gray-500 border-transparent hover:text-gray-300'
-                }`}
-              >
-                Live Updates
-              </button>
-              <button
-                onClick={() => setView('watchlist')}
-                className={`pb-3.5 text-sm font-semibold transition border-b-2 ${
-                  view === 'watchlist'
-                    ? 'text-gray-100 border-blue-500'
-                    : 'text-gray-500 border-transparent hover:text-gray-300'
-                }`}
-              >
-                My Watchlist
-              </button>
+              ))}
             </div>
           </div>
-          <div className="p-4">
-            {view === 'news' ? (
-              <>
-                <MobileList data={data} onSelect={handleSelect} />
-                <Footer onNavigate={handleNavigate} />
-              </>
-            ) : (
-              <>
-                <StockSelectionPage />
-                <Footer onNavigate={handleNavigate} />
-              </>
-            )}
-          </div>
+          <FeedList
+            data={activeData}
+            section={feedSection}
+            onSelect={handleSelect}
+          />
+          <Footer onNavigate={handleNavigate} />
         </main>
       )}
 
-      {isMobile && view === 'news' && showDetail && (
+      {isMobile && showDetail && (
         <main className="flex-1 p-4 overflow-y-auto">
-          <DetailPanel item={data[selectedIndex]} onBack={() => setShowDetail(false)} isMobile />
+          {feedSection === 'general' && (
+            <BriefingStockDetailPanel
+              item={activeData[selectedIndex]}
+              onBack={() => setShowDetail(false)}
+              isMobile
+            />
+          )}
+          {feedSection === 'industry' && (
+            <IndustryInsightDetailPanel
+              item={activeData[selectedIndex]}
+              onBack={() => setShowDetail(false)}
+              isMobile
+            />
+          )}
+          {feedSection === 'bse' && (
+            <DetailPanel
+              item={activeData[selectedIndex]}
+              onBack={() => setShowDetail(false)}
+              isMobile
+            />
+          )}
         </main>
       )}
     </div>

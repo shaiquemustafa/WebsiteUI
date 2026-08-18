@@ -51,11 +51,17 @@ export function getStoredSubscription() {
   }
 }
 
-/** Dashboard / comms access (paid or odd grace day). */
+/** Dashboard / comms access (paid or odd grace day). Personal mode = always open. */
 export function subscriptionHasAccess(subscription) {
+  if (import.meta.env.VITE_PERSONAL_MODE === 'true') return true;
+  if (subscription?.personal_mode) return true;
   if (!subscription) return false;
   if (subscription.has_access != null) return Boolean(subscription.has_access);
   return Boolean(subscription.is_paid);
+}
+
+export function isPersonalModeEnv() {
+  return import.meta.env.VITE_PERSONAL_MODE === 'true';
 }
 
 export function isLoggedIn() {
@@ -129,6 +135,26 @@ export async function trackMetaConversionEvent({ eventName, phone, eventId, even
   } catch {
     // Silent fail — should never block user actions
   }
+}
+
+export async function personalLogin(phone, name) {
+  const res = await fetch(`${API_BASE}/api/auth/personal-login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, name: name || undefined }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.detail || 'Login failed');
+  }
+
+  setToken(data.token);
+  setStoredUser(data.user);
+  if (data.subscription) setStoredSubscription(data.subscription);
+
+  return data;
 }
 
 export async function verifyOTP(phone, otp) {

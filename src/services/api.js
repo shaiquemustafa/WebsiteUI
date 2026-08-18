@@ -30,6 +30,40 @@ export async function fetchUIData(apiBase) {
   return Array.isArray(data) ? data : [];
 }
 
+export async function fetchPublicConfig(apiBase) {
+  const response = await fetch(`${apiBase || API_BASE}/api/config/public`);
+  if (!response.ok) return { personal_mode: false };
+  return response.json();
+}
+
+export async function fetchGeneralStockNews(apiBase) {
+  const token = getToken();
+  const headers = { Accept: 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${apiBase || API_BASE}/api/feeds/general-stock-news`, { headers });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || `HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchIndustryInsights(apiBase) {
+  const token = getToken();
+  const headers = { Accept: 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${apiBase || API_BASE}/api/feeds/industry-insights`, { headers });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || `HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+}
+
 
 // ── Stock search ─────────────────────────────────────────────────────
 

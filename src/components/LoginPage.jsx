@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { sendOTP, verifyOTP, updateUserName, trackMetaConversionEvent } from '../services/auth';
-import { searchStocks, saveWatchlist } from '../services/api';
+import { sendOTP, verifyOTP, personalLogin, updateUserName, trackMetaConversionEvent } from '../services/auth';
+import { searchStocks, saveWatchlist, fetchPublicConfig } from '../services/api';
 import Footer from './Footer';
 
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe.onrender.com';
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 const OTP_LENGTH = 4;
 
@@ -15,6 +16,7 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [verifyResult, setVerifyResult] = useState(null); // holds the result from verify-otp
+  const [personalMode, setPersonalMode] = useState(import.meta.env.VITE_PERSONAL_MODE === 'true');
   
   // Watchlist onboarding state
   const [watchlistQuery, setWatchlistQuery] = useState('');
@@ -26,6 +28,16 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
 
   const otpRefs = useRef([]);
   const nameRef = useRef(null);
+
+  useEffect(() => {
+    fetchPublicConfig(API_BASE)
+      .then((cfg) => {
+        if (cfg?.personal_mode || cfg?.auth_mode === 'phone_only') {
+          setPersonalMode(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -41,6 +53,26 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
       nameRef.current.focus();
     }
   }, [step]);
+
+  // ── Personal mode: phone-only login (no WhatsApp OTP) ──
+  const handlePersonalLogin = async (e) => {
+    e?.preventDefault();
+    setError('');
+    const cleaned = phone.replace(/\s|-/g, '');
+    if (!PHONE_REGEX.test(cleaned)) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await personalLogin(cleaned);
+      onLoginSuccess(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ── Step 1: Send OTP ──
   const handleSendOTP = async (e) => {
@@ -289,9 +321,15 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
 
             {/* ── Phone Step ── */}
             {step === 'phone' && (
-              <form onSubmit={handleSendOTP}>
-                <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">Login with WhatsApp</h2>
-                <p className="text-xs text-gray-500 mb-6 font-light">We'll send a verification code to your WhatsApp</p>
+              <form onSubmit={personalMode ? handlePersonalLogin : handleSendOTP}>
+                <h2 className="text-[17px] font-semibold text-gray-200 mb-1 tracking-tight">
+                  {personalMode ? 'Sign in' : 'Login with WhatsApp'}
+                </h2>
+                <p className="text-xs text-gray-500 mb-6 font-light">
+                  {personalMode
+                    ? 'Enter your registered mobile number to access your dashboard'
+                    : "We'll send a verification code to your WhatsApp"}
+                </p>
 
                 <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Mobile Number</label>
                 <div className="flex items-center gap-2 mb-5">
@@ -321,8 +359,10 @@ export default function LoginPage({ onLoginSuccess, onNavigate }) {
                   {loading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Sending...
+                      {personalMode ? 'Signing in...' : 'Sending...'}
                     </>
+                  ) : personalMode ? (
+                    'Continue'
                   ) : (
                     <>
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

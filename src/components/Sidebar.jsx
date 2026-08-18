@@ -1,93 +1,79 @@
-import { getImpactTextClass, getCategoryTextClass } from '../utils/format';
+import FeedList from './FeedList';
 
-export default function Sidebar({ data, activeIndex, onSelect, user, subscription, onLogout, onEditWatchlist, isWatchlistActive, onManageSubscription }) {
+const PERSONAL_TABS = [
+  { id: 'bse', label: 'BSE / NSE' },
+  { id: 'general', label: 'General News' },
+  { id: 'industry', label: 'Industry' },
+  { id: 'watchlist', label: 'Watchlist' },
+];
+
+const CUSTOMER_TABS = [
+  { id: 'bse', label: 'Live Updates' },
+  { id: 'watchlist', label: 'My Watchlist' },
+];
+
+export default function Sidebar({
+  data,
+  activeIndex,
+  onSelect,
+  user,
+  subscription,
+  onLogout,
+  onEditWatchlist,
+  feedSection,
+  onFeedSectionChange,
+  personalMode,
+  onManageSubscription,
+}) {
+  const tabs = personalMode ? PERSONAL_TABS : CUSTOMER_TABS;
+  const isWatchlistActive = feedSection === 'watchlist';
+
   return (
     <aside className="w-[400px] border-r border-white/[0.04] overflow-y-auto bg-[#06080a] flex-shrink-0 flex flex-col">
-      {/* Header */}
       <div className="sticky top-0 bg-[#06080a]/95 backdrop-blur-md z-10 px-5 pt-5 pb-0 border-b border-white/[0.04]">
         <div className="flex items-center gap-2.5 mb-5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
             <span className="text-base font-black text-white">R</span>
           </div>
-          <h1 className="text-xl font-bold text-gray-100 tracking-tight">RITO</h1>
+          <div>
+            <h1 className="text-xl font-bold text-gray-100 tracking-tight">RITO</h1>
+            {personalMode && (
+              <p className="text-[10px] text-gray-500 uppercase tracking-wide">Personal</p>
+            )}
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-7">
-          <button
-            onClick={() => { if (isWatchlistActive && onEditWatchlist) onEditWatchlist(); }}
-            className={`pb-3.5 text-sm font-semibold transition border-b-2 ${
-              !isWatchlistActive
-                ? 'text-gray-100 border-blue-500'
-                : 'text-gray-500 border-transparent hover:text-gray-300'
-            }`}
-          >
-            Live Updates
-          </button>
-          <button
-            onClick={() => { if (!isWatchlistActive && onEditWatchlist) onEditWatchlist(); }}
-            className={`pb-3.5 text-sm font-semibold transition border-b-2 ${
-              isWatchlistActive
-                ? 'text-gray-100 border-blue-500'
-                : 'text-gray-500 border-transparent hover:text-gray-300'
-            }`}
-          >
-            My Watchlist
-          </button>
+        <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide">
+          {tabs.map((tab) => {
+            const active = feedSection === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  if (tab.id === 'watchlist') {
+                    onEditWatchlist?.();
+                  } else {
+                    onFeedSectionChange?.(tab.id);
+                  }
+                }}
+                className={`pb-3.5 text-sm font-semibold transition border-b-2 whitespace-nowrap ${
+                  active
+                    ? 'text-gray-100 border-blue-500'
+                    : 'text-gray-500 border-transparent hover:text-gray-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Stock list */}
-      <div className="px-3 py-3 space-y-2 flex-1 overflow-y-auto">
-        {data.map((item, index) => {
-          const isActive = index === activeIndex && !isWatchlistActive;
-          const impact = item.impact || 'UNKNOWN';
-          const time = new Date(item.news_time).toLocaleString('en-IN', {
-            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-          });
+      {!isWatchlistActive && (
+        <FeedList data={data} section={feedSection} onSelect={onSelect} />
+      )}
 
-          return (
-            <div
-              key={`${item.scrip_cd}-${index}`}
-              className={`news-item-card ${isActive ? 'active' : ''}`}
-              onClick={() => onSelect(index)}
-            >
-              {/* Row 1: Company name + chevron */}
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold text-[14px] text-gray-100 leading-snug flex-1">
-                  {item.company_name || 'Unknown'}
-                </h3>
-                <svg className="card-chevron w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-
-              {/* Row 2: Impact + Category on one line */}
-              <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium">
-                <span className={getImpactTextClass(impact)}>{impact}</span>
-                {item.category && (
-                  <>
-                    <span className="text-gray-700">·</span>
-                    <span className={getCategoryTextClass(item.category)}>{item.category}</span>
-                  </>
-                )}
-              </div>
-
-              {/* Row 3: Summary */}
-              <p className="text-[12.5px] text-gray-400 mt-2 news-summary leading-relaxed">
-                {item.summary || 'No summary available.'}
-              </p>
-
-              {/* Row 4: Time */}
-              <div className="mt-2.5">
-                <span className="text-[11px] text-gray-600">{time}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* User footer */}
       {user && (
         <div className="border-t border-white/[0.04] px-5 py-4 bg-[#06080a]">
           <div className="flex items-center justify-between">
@@ -104,7 +90,7 @@ export default function Sidebar({ data, activeIndex, onSelect, user, subscriptio
                 <p className="text-xs text-gray-500 truncate">
                   +91 {user.phone?.slice(-10)}
                 </p>
-                {subscription?.is_paid && subscription.current_period_end && (
+                {!personalMode && subscription?.is_paid && subscription.current_period_end && (
                   <p className="text-[10px] text-emerald-500/80 truncate">
                     Active until {new Date(subscription.current_period_end).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                   </p>
@@ -112,7 +98,7 @@ export default function Sidebar({ data, activeIndex, onSelect, user, subscriptio
               </div>
             </div>
             <div className="flex flex-col gap-1.5 flex-shrink-0">
-              {onManageSubscription && (
+              {!personalMode && onManageSubscription && (
                 <button
                   type="button"
                   onClick={onManageSubscription}
@@ -122,15 +108,12 @@ export default function Sidebar({ data, activeIndex, onSelect, user, subscriptio
                 </button>
               )}
               <button
+                type="button"
                 onClick={onLogout}
-              className="flex items-center gap-1.5 text-xs font-medium text-red-400/80 bg-red-400/10 hover:bg-red-400/20 hover:text-red-400 border border-red-400/20 px-3 py-1.5 rounded-lg transition-all"
-              title="Logout"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Logout
-            </button>
+                className="text-[10px] font-medium text-red-400/80 hover:text-red-400 transition"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
