@@ -3,7 +3,7 @@ import { sendOTP, verifyOTP, personalLogin, updateUserName, trackMetaConversionE
 import { searchStocks, saveWatchlist, fetchPublicConfig } from '../services/api';
 import Footer from './Footer';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe-9s1j.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 const PHONE_REGEX = /^[6-9]\d{9}$/;
 const OTP_LENGTH = 4;
 

@@ -1,6 +1,7 @@
 // services/auth.js – Auth API calls & token management
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://wesbitebe-9s1j.onrender.com';
+// Empty string = same-origin; Netlify proxies /api and /ui-data to Render.
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 const TOKEN_KEY = 'rito_auth_token';
 const USER_KEY = 'rito_user';
 const SUBSCRIPTION_KEY = 'rito_subscription';
@@ -138,11 +139,18 @@ export async function trackMetaConversionEvent({ eventName, phone, eventId, even
 }
 
 export async function personalLogin(phone, name) {
-  const res = await fetch(`${API_BASE}/api/auth/personal-login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone, name: name || undefined }),
-  });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/auth/personal-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, name: name || undefined }),
+    });
+  } catch {
+    throw new Error(
+      'Could not reach the server. If you just changed Netlify settings, redeploy the site and remove any old VITE_API_BASE variable.'
+    );
+  }
 
   const data = await res.json();
 

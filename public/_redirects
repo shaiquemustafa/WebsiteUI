@@ -1,1 +1,6 @@
-/*    /index.html   200
+# Proxy API to Render (same-origin — avoids CORS and env var issues)
+/api/*  https://wesbitebe-9s1j.onrender.com/api/:splat  200
+/ui-data/*  https://wesbitebe-9s1j.onrender.com/ui-data/:splat  200
+
+# SPA fallback
+/*  /index.html  200

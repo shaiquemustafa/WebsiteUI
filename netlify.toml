@@ -2,7 +2,20 @@
   command = "npm run build"
   publish = "dist"
 
-# SPA redirect — send all routes to index.html
+# Proxy API calls to Render backend (same-origin — no VITE_API_BASE needed)
+[[redirects]]
+  from = "/api/*"
+  to = "https://wesbitebe-9s1j.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ui-data/*"
+  to = "https://wesbitebe-9s1j.onrender.com/ui-data/:splat"
+  status = 200
+  force = true
+
+# SPA redirect — all other routes to index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
