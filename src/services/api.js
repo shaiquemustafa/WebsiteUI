@@ -15,6 +15,10 @@ export async function fetchUIData(apiBase) {
     throw err;
   }
 
+  if (response.status === 404) {
+    return [];
+  }
+
   if (!response.ok) {
     const err = await response.json().catch(() => ({ detail: response.statusText }));
     throw new Error(err.detail || `HTTP ${response.status}`);

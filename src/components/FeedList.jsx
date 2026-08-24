@@ -101,6 +101,12 @@ export default function FeedList({ data, section = 'bse', onSelect }) {
                   <span className="text-gray-500">low impact</span>
                 </>
               )}
+              {item.stale_feed && (
+                <>
+                  <span className="text-gray-700">·</span>
+                  <span className="text-amber-500/80">previous cycle</span>
+                </>
+              )}
             </div>
 
             <p className="text-[12.5px] text-gray-400 mt-2 news-summary leading-relaxed">
